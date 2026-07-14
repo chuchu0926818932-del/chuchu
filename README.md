@@ -2,6 +2,8 @@
 
 這是一個本機優先的內容企劃網站，整合 80 條短影音題目、8 種爆款公式與 SNL 的品牌安全原則。未登入時保存在本機；登入後會同步到 Supabase，換電腦也能接著做。
 
+正式網站：[https://snl-short-video-studio.vercel.app](https://snl-short-video-studio.vercel.app)
+
 ## 平常怎麼開啟
 
 1. 雙擊桌面的「啟動短影音企劃網站」捷徑。
