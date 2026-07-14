@@ -33,6 +33,7 @@ type WorkspaceData = {
 type CloudStatus = "local" | "connecting" | "syncing" | "synced" | "error";
 
 const STORAGE_KEY = "snl-short-video-studio-v1";
+const TOPIC_PAGE_SIZE = 18;
 const statuses: PlanStatus[] = ["待規劃", "撰稿中", "待拍攝", "後製中", "已完成"];
 const situations = ["下班很累", "週末聚餐", "半夜想吃東西", "照鏡子很焦慮", "社群比較後低落", "久坐上班", "早上趕時間", "旅行或出差", "生理期前後", "重新開始的第一週"];
 const audiences = ["剛開始改變", "知道方法但做不到", "反覆減肥很疲累", "害怕失敗", "容易自責", "想穩定照顧自己"];
@@ -74,8 +75,10 @@ function downloadText(filename: string, text: string, type = "text/markdown;char
   const anchor = document.createElement("a");
   anchor.href = url;
   anchor.download = filename;
+  document.body.appendChild(anchor);
   anchor.click();
-  URL.revokeObjectURL(url);
+  anchor.remove();
+  window.setTimeout(() => URL.revokeObjectURL(url), 0);
 }
 
 export default function Home() {
@@ -85,6 +88,7 @@ export default function Home() {
   const [categoryFilter, setCategoryFilter] = useState("全部主題");
   const [riskFilter, setRiskFilter] = useState("全部風險");
   const [onlyFavorites, setOnlyFavorites] = useState(false);
+  const [visibleTopicCount, setVisibleTopicCount] = useState(TOPIC_PAGE_SIZE);
   const [favorites, setFavorites] = useState<string[]>([]);
   const [plans, setPlans] = useState<Record<string, SavedPlan>>({});
   const [activeTopicId, setActiveTopicId] = useState(topics[0].id);
@@ -98,6 +102,7 @@ export default function Home() {
   const [authEmail, setAuthEmail] = useState("");
   const [authBusy, setAuthBusy] = useState(false);
   const [authMessage, setAuthMessage] = useState("");
+  const [removeConfirming, setRemoveConfirming] = useState(false);
   const workspaceRef = useRef<WorkspaceData>({
     favorites: [],
     plans: {},
@@ -269,6 +274,8 @@ export default function Home() {
     });
   }, [query, formulaFilter, categoryFilter, riskFilter, onlyFavorites, favorites]);
 
+  const visibleTopics = filteredTopics.slice(0, visibleTopicCount);
+
   const plannedTopics = useMemo(() => Object.values(plans)
     .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt)), [plans]);
 
@@ -329,6 +336,7 @@ export default function Home() {
 
   function openPlanner(topic: Topic) {
     setActiveTopicId(topic.id);
+    setRemoveConfirming(false);
     setPlans((current) => current[topic.id]
       ? current
       : { ...current, [topic.id]: defaultPlan(topic) });
@@ -344,6 +352,38 @@ export default function Home() {
         updatedAt: new Date().toISOString(),
       },
     }));
+  }
+
+  function setPublishDateAfter(days: number) {
+    const date = new Date();
+    date.setDate(date.getDate() + days);
+    const localDate = [
+      date.getFullYear(),
+      String(date.getMonth() + 1).padStart(2, "0"),
+      String(date.getDate()).padStart(2, "0"),
+    ].join("-");
+    updatePlan("publishDate", localDate);
+    flash(days === 1 ? "已排到明天" : "已排到 7 天後");
+  }
+
+  function removeActivePlan() {
+    setPlans((current) => {
+      const next = { ...current };
+      delete next[activeTopic.id];
+      return next;
+    });
+    setRemoveConfirming(false);
+    setView("library");
+    flash("企劃已移除，原始題目仍保留在題庫");
+  }
+
+  function clearLibraryFilters() {
+    setQuery("");
+    setFormulaFilter("全部公式");
+    setCategoryFilter("全部主題");
+    setRiskFilter("全部風險");
+    setOnlyFavorites(false);
+    setVisibleTopicCount(TOPIC_PAGE_SIZE);
   }
 
   function exportWorkspace() {
@@ -434,6 +474,13 @@ export default function Home() {
         </div>
       </section>
 
+      {!session && favorites.length === 0 && plannedTopics.length === 0 && (
+        <aside className="migration-note" aria-label="本機版資料搬移提示">
+          <div><strong>已有本機版資料？</strong><span>先在舊版按「匯出備份」，再回正式站用上方「匯入備份」，登入後就會接著同步到雲端。</span></div>
+          <button className="button secondary small" onClick={() => setAuthOpen(true)} disabled={!supabaseConfigured}>搬完後登入同步</button>
+        </aside>
+      )}
+
       <nav className="view-tabs" aria-label="主要功能">
         <button className={view === "library" ? "active" : ""} onClick={() => setView("library")}><span>01</span>靈感題庫</button>
         <button className={view === "planner" ? "active" : ""} onClick={() => setView("planner")}><span>02</span>企劃工作區</button>
@@ -454,36 +501,36 @@ export default function Home() {
           <div className="filter-panel">
             <label className="search-field">
               <span>搜尋</span>
-              <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="輸入情境、問題或關鍵字…" />
+              <input value={query} onChange={(event) => { setQuery(event.target.value); setVisibleTopicCount(TOPIC_PAGE_SIZE); }} placeholder="輸入情境、問題或關鍵字…" />
             </label>
             <label>
               <span>爆款公式</span>
-              <select value={formulaFilter} onChange={(event) => setFormulaFilter(event.target.value)}>
+              <select value={formulaFilter} onChange={(event) => { setFormulaFilter(event.target.value); setVisibleTopicCount(TOPIC_PAGE_SIZE); }}>
                 <option>全部公式</option>
                 {formulas.map((formula) => <option key={formula}>{formula}</option>)}
               </select>
             </label>
             <label>
               <span>內容主題</span>
-              <select value={categoryFilter} onChange={(event) => setCategoryFilter(event.target.value)}>
+              <select value={categoryFilter} onChange={(event) => { setCategoryFilter(event.target.value); setVisibleTopicCount(TOPIC_PAGE_SIZE); }}>
                 <option>全部主題</option>
                 {categories.map((category) => <option key={category}>{category}</option>)}
               </select>
             </label>
             <label>
               <span>風險</span>
-              <select value={riskFilter} onChange={(event) => setRiskFilter(event.target.value)}>
+              <select value={riskFilter} onChange={(event) => { setRiskFilter(event.target.value); setVisibleTopicCount(TOPIC_PAGE_SIZE); }}>
                 <option>全部風險</option>
                 <option>低</option><option>中</option><option>高</option>
               </select>
             </label>
-            <button className={`favorite-filter ${onlyFavorites ? "active" : ""}`} onClick={() => setOnlyFavorites((value) => !value)}>
+            <button className={`favorite-filter ${onlyFavorites ? "active" : ""}`} onClick={() => { setOnlyFavorites((value) => !value); setVisibleTopicCount(TOPIC_PAGE_SIZE); }}>
               {onlyFavorites ? "★" : "☆"} 只看收藏
             </button>
           </div>
 
           <div className="topic-grid">
-            {filteredTopics.map((topic) => (
+            {visibleTopics.map((topic) => (
               <article className="topic-card" key={topic.id}>
                 <div className="card-topline">
                   <div className="badge-row">
@@ -515,12 +562,21 @@ export default function Home() {
             ))}
           </div>
 
+          {filteredTopics.length > 0 && (
+            <div className="library-pagination">
+              <p>目前顯示 <strong>{visibleTopics.length}</strong> / {filteredTopics.length} 條</p>
+              {visibleTopics.length < filteredTopics.length && (
+                <button className="button secondary" onClick={() => setVisibleTopicCount((count) => count + TOPIC_PAGE_SIZE)}>再顯示 {Math.min(TOPIC_PAGE_SIZE, filteredTopics.length - visibleTopics.length)} 條</button>
+              )}
+            </div>
+          )}
+
           {filteredTopics.length === 0 && (
             <div className="empty-state">
               <div>⌕</div>
               <h3>目前沒有符合的題目</h3>
               <p>換一個關鍵字，或清除部分篩選條件。</p>
-              <button className="button primary" onClick={() => { setQuery(""); setFormulaFilter("全部公式"); setCategoryFilter("全部主題"); setRiskFilter("全部風險"); setOnlyFavorites(false); }}>清除篩選</button>
+              <button className="button primary" onClick={clearLibraryFilters}>清除篩選</button>
             </div>
           )}
         </section>
@@ -571,11 +627,14 @@ export default function Home() {
                 <label><span>單一 CTA</span><textarea value={activePlan.cta} onChange={(event) => updatePlan("cta", event.target.value)} rows={5} /></label>
               </div>
               <div className="form-row two compact">
-                <label><span>預計發布日期</span><input type="date" value={activePlan.publishDate} onChange={(event) => updatePlan("publishDate", event.target.value)} /></label>
-                <label><span>內部備註</span><input value={activePlan.notes} onChange={(event) => updatePlan("notes", event.target.value)} placeholder="素材、場景、服裝或審稿事項" /></label>
+                <label><span>預計發布日期</span><input type="date" value={activePlan.publishDate} onChange={(event) => updatePlan("publishDate", event.target.value)} /><span className="date-shortcuts"><button type="button" onClick={() => setPublishDateAfter(1)}>明天</button><button type="button" onClick={() => setPublishDateAfter(7)}>7 天後</button></span></label>
+                <label><span>內部備註</span><textarea value={activePlan.notes} onChange={(event) => updatePlan("notes", event.target.value)} placeholder="素材、場景、服裝或審稿事項" rows={3} /></label>
               </div>
               <div className="planner-actions">
                 <div><strong>{session ? cloudStatusLabel : "已自動儲存"}</strong><span>{session ? "雲端同步失敗時仍會保存在本機瀏覽器" : "目前保存在本機；登入後可跨裝置同步"}</span></div>
+                {plans[activeTopic.id] && (removeConfirming ? (
+                  <span className="remove-confirm"><b>確定移除？</b><button type="button" onClick={removeActivePlan}>確定</button><button type="button" onClick={() => setRemoveConfirming(false)}>取消</button></span>
+                ) : <button className="button danger" type="button" onClick={() => setRemoveConfirming(true)}>移除企劃</button>)}
                 <button className="button secondary" onClick={downloadPlan}>下載企劃</button>
                 <button className="button primary large" onClick={() => copyText(buildCodexPrompt(activeTopic, activePlan), "已複製，可直接貼給 Codex")}>複製給 Codex ✦</button>
               </div>

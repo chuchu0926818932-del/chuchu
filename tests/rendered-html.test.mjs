@@ -42,6 +42,12 @@ test("ships all 80 imported topics with local fallback and Supabase sync", async
   assert.match(pageSource, /buildCodexPrompt/);
   assert.match(pageSource, /exportWorkspace/);
   assert.match(pageSource, /importWorkspace/);
+  assert.match(pageSource, /TOPIC_PAGE_SIZE/);
+  assert.match(pageSource, /removeActivePlan/);
+  assert.match(pageSource, /setPublishDateAfter/);
+  assert.match(pageSource, /document\.body\.appendChild\(anchor\)/);
+  assert.match(pageSource, /<textarea value=\{activePlan\.notes\}/);
+  assert.match(pageSource, /已有本機版資料/);
   assert.match(pageSource, /signInWithOtp/);
   assert.match(pageSource, /snl_workspaces/);
   assert.match(supabaseSource, /NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY/);
