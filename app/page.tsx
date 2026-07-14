@@ -1,6 +1,8 @@
 "use client";
 
-import { ChangeEvent, useEffect, useMemo, useState } from "react";
+import type { Session } from "@supabase/supabase-js";
+import { ChangeEvent, FormEvent, useEffect, useMemo, useRef, useState } from "react";
+import { supabase, supabaseConfigured } from "./supabase";
 import { categories, formulas, Topic, topics } from "./topics";
 
 type View = "library" | "planner" | "generator" | "board";
@@ -27,6 +29,8 @@ type WorkspaceData = {
   plans: Record<string, SavedPlan>;
   activeTopicId: string;
 };
+
+type CloudStatus = "local" | "connecting" | "syncing" | "synced" | "error";
 
 const STORAGE_KEY = "snl-short-video-studio-v1";
 const statuses: PlanStatus[] = ["待規劃", "撰稿中", "待拍攝", "後製中", "已完成"];
@@ -86,6 +90,19 @@ export default function Home() {
   const [activeTopicId, setActiveTopicId] = useState(topics[0].id);
   const [hydrated, setHydrated] = useState(false);
   const [toast, setToast] = useState("");
+  const [session, setSession] = useState<Session | null>(null);
+  const [authReady, setAuthReady] = useState(!supabaseConfigured);
+  const [cloudReady, setCloudReady] = useState(false);
+  const [cloudStatus, setCloudStatus] = useState<CloudStatus>(supabaseConfigured ? "local" : "error");
+  const [authOpen, setAuthOpen] = useState(false);
+  const [authEmail, setAuthEmail] = useState("");
+  const [authBusy, setAuthBusy] = useState(false);
+  const [authMessage, setAuthMessage] = useState("");
+  const workspaceRef = useRef<WorkspaceData>({
+    favorites: [],
+    plans: {},
+    activeTopicId: topics[0].id,
+  });
 
   const [generatorFormula, setGeneratorFormula] = useState(formulas[0]);
   const [generatorCategory, setGeneratorCategory] = useState(categories[0]);
@@ -117,8 +134,116 @@ export default function Home() {
   useEffect(() => {
     if (!hydrated) return;
     const data: WorkspaceData = { favorites, plans, activeTopicId };
+    workspaceRef.current = data;
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
   }, [favorites, plans, activeTopicId, hydrated]);
+
+  useEffect(() => {
+    const client = supabase;
+    if (!client) return;
+
+    let active = true;
+    client.auth.getSession().then(({ data, error }) => {
+      if (!active) return;
+      if (error) {
+        setCloudStatus("error");
+      } else {
+        setSession(data.session);
+      }
+      setAuthReady(true);
+    });
+
+    const { data: listener } = client.auth.onAuthStateChange((_event, nextSession) => {
+      if (!active) return;
+      setSession(nextSession);
+      setCloudReady(false);
+      if (!nextSession) setCloudStatus("local");
+    });
+
+    return () => {
+      active = false;
+      listener.subscription.unsubscribe();
+    };
+  }, []);
+
+  useEffect(() => {
+    const client = supabase;
+    if (!hydrated || !authReady) return;
+    if (!client || !session) return;
+
+    let cancelled = false;
+    const loadCloudWorkspace = async () => {
+      setCloudStatus("connecting");
+      const { data, error } = await client
+        .from("snl_workspaces")
+        .select("favorites, plans, active_topic_id")
+        .eq("user_id", session.user.id)
+        .maybeSingle();
+
+      if (cancelled) return;
+      if (error) {
+        setCloudStatus("error");
+        setToast("雲端資料暫時無法讀取，本機資料仍會保存");
+        return;
+      }
+
+      if (data) {
+        const cloudFavorites = Array.isArray(data.favorites) ? data.favorites : [];
+        const cloudPlans = data.plans && typeof data.plans === "object"
+          ? data.plans as unknown as Record<string, SavedPlan>
+          : {};
+        const cloudActiveTopicId = typeof data.active_topic_id === "string"
+          && topics.some((topic) => topic.id === data.active_topic_id)
+          ? data.active_topic_id
+          : topics[0].id;
+        setFavorites(cloudFavorites);
+        setPlans(cloudPlans);
+        setActiveTopicId(cloudActiveTopicId);
+      } else {
+        const localWorkspace = workspaceRef.current;
+        const { error: createError } = await client.from("snl_workspaces").upsert({
+          user_id: session.user.id,
+          favorites: localWorkspace.favorites,
+          plans: localWorkspace.plans,
+          active_topic_id: localWorkspace.activeTopicId,
+          updated_at: new Date().toISOString(),
+        });
+        if (createError) {
+          setCloudStatus("error");
+          setToast("首次雲端同步失敗，本機資料仍會保存");
+          return;
+        }
+      }
+
+      setCloudReady(true);
+      setCloudStatus("synced");
+    };
+
+    void loadCloudWorkspace();
+    return () => {
+      cancelled = true;
+    };
+  }, [authReady, hydrated, session]);
+
+  useEffect(() => {
+    const client = supabase;
+    if (!client || !session || !cloudReady || !hydrated) return;
+
+    const timer = window.setTimeout(async () => {
+      setCloudStatus("syncing");
+      const { error } = await client.from("snl_workspaces").upsert({
+        user_id: session.user.id,
+        favorites,
+        plans,
+        active_topic_id: activeTopicId,
+        updated_at: new Date().toISOString(),
+      });
+      setCloudStatus(error ? "error" : "synced");
+      if (error) setToast("雲端同步暫停，本機資料已保存");
+    }, 700);
+
+    return () => window.clearTimeout(timer);
+  }, [activeTopicId, cloudReady, favorites, hydrated, plans, session]);
 
   useEffect(() => {
     if (!toast) return;
@@ -157,6 +282,44 @@ export default function Home() {
     await navigator.clipboard.writeText(text);
     flash(message);
   }
+
+  async function sendMagicLink(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const client = supabase;
+    const email = authEmail.trim();
+    if (!client || !email) return;
+
+    setAuthBusy(true);
+    setAuthMessage("");
+    const { error } = await client.auth.signInWithOtp({
+      email,
+      options: { emailRedirectTo: window.location.origin },
+    });
+    setAuthBusy(false);
+    setAuthMessage(error ? `登入連結寄送失敗：${error.message}` : "登入連結已寄出，請到信箱點一下就會回到工作台。");
+  }
+
+  async function signOut() {
+    const client = supabase;
+    if (!client) return;
+    await client.auth.signOut();
+    setAuthOpen(false);
+    flash("已登出；目前改用本機保存");
+  }
+
+  const cloudStatusLabel = !supabaseConfigured
+    ? "Supabase 尚未設定"
+    : !authReady
+      ? "檢查登入狀態"
+      : cloudStatus === "connecting"
+        ? "正在載入雲端"
+        : cloudStatus === "syncing"
+          ? "正在同步"
+          : cloudStatus === "synced"
+            ? "已同步至 Supabase"
+            : cloudStatus === "error"
+              ? "雲端暫停・本機已保存"
+              : "本機保存・可登入同步";
 
   function toggleFavorite(topicId: string) {
     setFavorites((current) => current.includes(topicId)
@@ -226,7 +389,12 @@ export default function Home() {
           </div>
         </div>
         <div className="topbar-actions">
-          <span className="local-badge"><span className="status-dot" />資料只存在這台電腦</span>
+          <span className={`local-badge sync-${cloudStatus}`}><span className="status-dot" />{cloudStatusLabel}</span>
+          {session ? (
+            <button className="button ghost small" onClick={signOut} title={session.user.email}>登出雲端</button>
+          ) : (
+            <button className="button secondary small" onClick={() => setAuthOpen(true)} disabled={!supabaseConfigured}>登入雲端同步</button>
+          )}
           <button className="button ghost small" onClick={exportWorkspace}>匯出備份</button>
           <label className="button ghost small file-label">
             匯入備份
@@ -234,6 +402,23 @@ export default function Home() {
           </label>
         </div>
       </header>
+
+      {authOpen && !session && (
+        <div className="auth-overlay" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setAuthOpen(false); }}>
+          <section className="auth-dialog" role="dialog" aria-modal="true" aria-labelledby="auth-title">
+            <button className="auth-close" aria-label="關閉登入視窗" onClick={() => setAuthOpen(false)}>×</button>
+            <p className="eyebrow dark">SUPABASE CLOUD</p>
+            <h2 id="auth-title">登入後，換電腦也能接著做</h2>
+            <p>輸入 Email，我們會寄一封免密碼登入信。第一次登入會把這台電腦現有的收藏與企劃安全搬到你的雲端工作區。</p>
+            <form onSubmit={sendMagicLink}>
+              <label><span>Email</span><input type="email" value={authEmail} onChange={(event) => setAuthEmail(event.target.value)} placeholder="name@example.com" autoComplete="email" required /></label>
+              <button className="button primary large" type="submit" disabled={authBusy}>{authBusy ? "寄送中…" : "寄送登入連結"}</button>
+            </form>
+            {authMessage && <p className="auth-message" role="status">{authMessage}</p>}
+            <small>雲端資料受使用者權限隔離；即使使用公開的前端金鑰，其他人也無法讀取你的工作區。</small>
+          </section>
+        </div>
+      )}
 
       <section className="hero-strip">
         <div>
@@ -390,7 +575,7 @@ export default function Home() {
                 <label><span>內部備註</span><input value={activePlan.notes} onChange={(event) => updatePlan("notes", event.target.value)} placeholder="素材、場景、服裝或審稿事項" /></label>
               </div>
               <div className="planner-actions">
-                <div><strong>已自動儲存</strong><span>這份企劃保存在本機瀏覽器</span></div>
+                <div><strong>{session ? cloudStatusLabel : "已自動儲存"}</strong><span>{session ? "雲端同步失敗時仍會保存在本機瀏覽器" : "目前保存在本機；登入後可跨裝置同步"}</span></div>
                 <button className="button secondary" onClick={downloadPlan}>下載企劃</button>
                 <button className="button primary large" onClick={() => copyText(buildCodexPrompt(activeTopic, activePlan), "已複製，可直接貼給 Codex")}>複製給 Codex ✦</button>
               </div>
@@ -468,7 +653,7 @@ export default function Home() {
       )}
 
       <footer>
-        <p>SNL Short Video Studio · 本地工作區</p>
+        <p>SNL Short Video Studio · 本機優先＋Supabase 雲端同步</p>
         <p>借用爆款結構，但保留真實、尊重與專業。</p>
       </footer>
 

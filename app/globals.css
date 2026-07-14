@@ -61,7 +61,21 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
 .topbar-actions { display: flex; align-items: center; gap: 10px; }
 .local-badge { display: inline-flex; align-items: center; gap: 7px; padding: 8px 12px; background: var(--teal-soft); border-radius: 999px; color: var(--teal-deep); font-size: 12px; font-weight: 700; }
 .status-dot { width: 7px; height: 7px; border-radius: 50%; background: #2aa46d; box-shadow: 0 0 0 4px rgba(42, 164, 109, .12); }
+.sync-connecting .status-dot, .sync-syncing .status-dot { background: #d59a2f; box-shadow: 0 0 0 4px rgba(213, 154, 47, .14); animation: pulse 1s ease-in-out infinite; }
+.sync-error { background: #f8e5df; color: #94483f; }
+.sync-error .status-dot { background: var(--coral); box-shadow: 0 0 0 4px rgba(234, 107, 90, .14); }
+@keyframes pulse { 50% { opacity: .45; } }
 .file-label input { display: none; }
+
+.auth-overlay { position: fixed; inset: 0; z-index: 80; display: grid; place-items: center; padding: 20px; background: rgba(23, 50, 47, .55); backdrop-filter: blur(5px); }
+.auth-dialog { position: relative; width: min(520px, 100%); padding: 32px; background: var(--cream); border: 1px solid var(--line); border-radius: 20px; box-shadow: 0 26px 70px rgba(20, 46, 43, .28); }
+.auth-dialog h2 { margin: 5px 38px 10px 0; font-family: Georgia, "Noto Serif TC", serif; font-size: 28px; }
+.auth-dialog > p:not(.eyebrow):not(.auth-message) { color: var(--muted); line-height: 1.7; }
+.auth-dialog form { display: flex; align-items: flex-end; gap: 10px; margin-top: 20px; }
+.auth-dialog form label { flex: 1; }
+.auth-dialog small { display: block; margin-top: 17px; color: #7e8784; line-height: 1.6; }
+.auth-close { position: absolute; top: 17px; right: 17px; width: 36px; height: 36px; border: 1px solid var(--line); border-radius: 50%; background: white; color: var(--muted); font-size: 22px; line-height: 1; }
+.auth-message { margin: 14px 0 0; padding: 11px 13px; border-radius: 10px; background: var(--teal-soft); color: var(--teal-deep); font-size: 13px; font-weight: 700; line-height: 1.6; }
 
 .hero-strip {
   display: grid;
@@ -213,6 +227,8 @@ footer p { margin: 0; }
   .topbar { align-items: flex-start; position: static; }
   .topbar-actions { flex-wrap: wrap; justify-content: flex-end; }
   .local-badge { width: 100%; justify-content: center; }
+  .auth-dialog form { align-items: stretch; flex-direction: column; }
+  .auth-dialog form .button { width: 100%; }
   .hero-strip { padding-top: 32px; }
   .hero-stats { grid-template-columns: repeat(2, 1fr); }
   .hero-stats div:nth-child(2) { border-right: 0; }
