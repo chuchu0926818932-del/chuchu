@@ -29,9 +29,10 @@ test("server-renders the SNL planning workspace", async () => {
 });
 
 test("ships all 80 imported topics with local fallback and Supabase sync", async () => {
-  const [topicsSource, pageSource, supabaseSource, migrationSource, packageJson] = await Promise.all([
+  const [topicsSource, pageSource, cssSource, supabaseSource, migrationSource, packageJson] = await Promise.all([
     readFile(new URL("../app/topics.ts", import.meta.url), "utf8"),
     readFile(new URL("../app/page.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/globals.css", import.meta.url), "utf8"),
     readFile(new URL("../app/supabase.ts", import.meta.url), "utf8"),
     readFile(new URL("../supabase/migrations/202607140001_create_snl_workspaces.sql", import.meta.url), "utf8"),
     readFile(new URL("../package.json", import.meta.url), "utf8"),
@@ -48,6 +49,9 @@ test("ships all 80 imported topics with local fallback and Supabase sync", async
   assert.match(pageSource, /document\.body\.appendChild\(anchor\)/);
   assert.match(pageSource, /<textarea value=\{activePlan\.notes\}/);
   assert.match(pageSource, /已有本機版資料/);
+  assert.match(cssSource, /@media \(max-width: 720px\)[\s\S]*\.topbar \{[^}]*flex-direction: column/);
+  assert.match(cssSource, /@media \(max-width: 720px\)[\s\S]*\.view-tabs \{[^}]*grid-template-columns: repeat\(4/);
+  assert.match(cssSource, /\.topbar-actions \.button[^}]*min-height: 44px/);
   assert.match(pageSource, /signInWithOtp/);
   assert.match(pageSource, /snl_workspaces/);
   assert.match(supabaseSource, /NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY/);
