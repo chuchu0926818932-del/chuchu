@@ -2,6 +2,7 @@
 
 import type { Session } from "@supabase/supabase-js";
 import { ChangeEvent, FormEvent, useEffect, useMemo, useRef, useState } from "react";
+import { buildScriptSegments, formatShootingScript, generateUniqueTopics, type ScriptSegment } from "./script-engine";
 import { supabase, supabaseConfigured } from "./supabase";
 import { categories, formulas, Topic, topics } from "./topics";
 
@@ -21,6 +22,8 @@ type SavedPlan = {
   cta: string;
   publishDate: string;
   notes: string;
+  scriptSegments: ScriptSegment[];
+  completedAt: string;
   updatedAt: string;
 };
 
@@ -28,6 +31,13 @@ type WorkspaceData = {
   favorites: string[];
   plans: Record<string, SavedPlan>;
   activeTopicId: string;
+  customTopics: Topic[];
+};
+
+type CloudPlanEnvelope = {
+  __workspaceVersion: 2;
+  items: Record<string, SavedPlan>;
+  customTopics: Topic[];
 };
 
 type CloudStatus = "local" | "connecting" | "syncing" | "synced" | "error";
@@ -48,7 +58,7 @@ const categoryColors: Record<string, string> = {
 };
 
 function defaultPlan(topic: Topic): SavedPlan {
-  return {
+  const plan: SavedPlan = {
     topicId: topic.id,
     status: "待規劃",
     platform: "Instagram Reels",
@@ -61,12 +71,28 @@ function defaultPlan(topic: Topic): SavedPlan {
     cta: topic.cta,
     publishDate: "",
     notes: `建議結構：${topic.structure}\n發布前確認：${topic.check}`,
+    scriptSegments: [],
+    completedAt: "",
     updatedAt: new Date().toISOString(),
   };
+  plan.scriptSegments = buildScriptSegments(topic, plan);
+  return plan;
 }
 
-function buildCodexPrompt(topic: Topic, plan: SavedPlan) {
-  return `請依照以下企劃，為 SNL 製作一支可直接拍攝的短影音內容。\n\n【主題】${topic.title}\n【公式】${topic.formula}\n【內容類別】${topic.category}\n【平台】${plan.platform}\n【長度】${plan.duration}\n【目標受眾】${plan.audience}\n【內容目的】${plan.objective}\n【前 3 秒鉤子】${plan.opening}\n【唯一核心觀點】${plan.keyMessage}\n【畫面與鏡頭】${plan.shots}\n【CTA】${plan.cta}\n【補充備註】${plan.notes || "無"}\n【健康／真實性風險】${topic.risk}；${topic.check}\n\n請輸出：\n1. 45–60 秒口語腳本，逐句分段。\n2. 每一段對應的畫面與字幕重點。\n3. 封面文字 3 個版本。\n4. 貼文說明與單一 CTA。\n5. 發布前需要人工確認的健康宣稱、個資或素材授權。\n\n語氣請溫柔、誠實、清楚、專業，不訓話、不責備、不製造身材羞恥；不捏造學員、數字、對話、成果或健康宣稱。每支影片只保留一個主軸。`;
+function packCloudPlans(plans: Record<string, SavedPlan>, customTopics: Topic[]): CloudPlanEnvelope {
+  return { __workspaceVersion: 2, items: plans, customTopics };
+}
+
+function unpackCloudPlans(value: unknown) {
+  if (!value || typeof value !== "object") return { plans: {}, customTopics: [] as Topic[] };
+  const candidate = value as Partial<CloudPlanEnvelope>;
+  if (candidate.__workspaceVersion === 2 && candidate.items && typeof candidate.items === "object") {
+    return {
+      plans: candidate.items as Record<string, SavedPlan>,
+      customTopics: Array.isArray(candidate.customTopics) ? candidate.customTopics : [],
+    };
+  }
+  return { plans: value as Record<string, SavedPlan>, customTopics: [] as Topic[] };
 }
 
 function downloadText(filename: string, text: string, type = "text/markdown;charset=utf-8") {
@@ -88,9 +114,11 @@ export default function Home() {
   const [categoryFilter, setCategoryFilter] = useState("全部主題");
   const [riskFilter, setRiskFilter] = useState("全部風險");
   const [onlyFavorites, setOnlyFavorites] = useState(false);
+  const [showCompleted, setShowCompleted] = useState(false);
   const [visibleTopicCount, setVisibleTopicCount] = useState(TOPIC_PAGE_SIZE);
   const [favorites, setFavorites] = useState<string[]>([]);
   const [plans, setPlans] = useState<Record<string, SavedPlan>>({});
+  const [customTopics, setCustomTopics] = useState<Topic[]>([]);
   const [activeTopicId, setActiveTopicId] = useState(topics[0].id);
   const [hydrated, setHydrated] = useState(false);
   const [toast, setToast] = useState("");
@@ -107,6 +135,7 @@ export default function Home() {
     favorites: [],
     plans: {},
     activeTopicId: topics[0].id,
+    customTopics: [],
   });
 
   const [generatorFormula, setGeneratorFormula] = useState(formulas[0]);
@@ -114,6 +143,7 @@ export default function Home() {
   const [generatorSituation, setGeneratorSituation] = useState(situations[0]);
   const [generatorAudience, setGeneratorAudience] = useState(audiences[1]);
   const [generatorPurpose, setGeneratorPurpose] = useState(purposes[0]);
+  const allTopics = useMemo(() => [...topics, ...customTopics], [customTopics]);
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
@@ -121,9 +151,11 @@ export default function Home() {
         const raw = window.localStorage.getItem(STORAGE_KEY);
         if (raw) {
           const saved = JSON.parse(raw) as Partial<WorkspaceData>;
+          const savedCustomTopics = Array.isArray(saved.customTopics) ? saved.customTopics : [];
           if (Array.isArray(saved.favorites)) setFavorites(saved.favorites);
           if (saved.plans && typeof saved.plans === "object") setPlans(saved.plans);
-          if (saved.activeTopicId && topics.some((topic) => topic.id === saved.activeTopicId)) {
+          setCustomTopics(savedCustomTopics);
+          if (saved.activeTopicId && [...topics, ...savedCustomTopics].some((topic) => topic.id === saved.activeTopicId)) {
             setActiveTopicId(saved.activeTopicId);
           }
         }
@@ -138,10 +170,10 @@ export default function Home() {
 
   useEffect(() => {
     if (!hydrated) return;
-    const data: WorkspaceData = { favorites, plans, activeTopicId };
+    const data: WorkspaceData = { favorites, plans, activeTopicId, customTopics };
     workspaceRef.current = data;
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-  }, [favorites, plans, activeTopicId, hydrated]);
+  }, [favorites, plans, activeTopicId, customTopics, hydrated]);
 
   useEffect(() => {
     const client = supabase;
@@ -194,22 +226,21 @@ export default function Home() {
 
       if (data) {
         const cloudFavorites = Array.isArray(data.favorites) ? data.favorites : [];
-        const cloudPlans = data.plans && typeof data.plans === "object"
-          ? data.plans as unknown as Record<string, SavedPlan>
-          : {};
+        const decoded = unpackCloudPlans(data.plans);
         const cloudActiveTopicId = typeof data.active_topic_id === "string"
-          && topics.some((topic) => topic.id === data.active_topic_id)
+          && [...topics, ...decoded.customTopics].some((topic) => topic.id === data.active_topic_id)
           ? data.active_topic_id
           : topics[0].id;
         setFavorites(cloudFavorites);
-        setPlans(cloudPlans);
+        setPlans(decoded.plans);
+        setCustomTopics(decoded.customTopics);
         setActiveTopicId(cloudActiveTopicId);
       } else {
         const localWorkspace = workspaceRef.current;
         const { error: createError } = await client.from("snl_workspaces").upsert({
           user_id: session.user.id,
           favorites: localWorkspace.favorites,
-          plans: localWorkspace.plans,
+          plans: packCloudPlans(localWorkspace.plans, localWorkspace.customTopics),
           active_topic_id: localWorkspace.activeTopicId,
           updated_at: new Date().toISOString(),
         });
@@ -239,7 +270,7 @@ export default function Home() {
       const { error } = await client.from("snl_workspaces").upsert({
         user_id: session.user.id,
         favorites,
-        plans,
+        plans: packCloudPlans(plans, customTopics),
         active_topic_id: activeTopicId,
         updated_at: new Date().toISOString(),
       });
@@ -248,7 +279,7 @@ export default function Home() {
     }, 700);
 
     return () => window.clearTimeout(timer);
-  }, [activeTopicId, cloudReady, favorites, hydrated, plans, session]);
+  }, [activeTopicId, cloudReady, customTopics, favorites, hydrated, plans, session]);
 
   useEffect(() => {
     if (!toast) return;
@@ -256,12 +287,20 @@ export default function Home() {
     return () => window.clearTimeout(timer);
   }, [toast]);
 
-  const activeTopic = topics.find((topic) => topic.id === activeTopicId) ?? topics[0];
+  useEffect(() => {
+    if (!hydrated) return;
+    window.scrollTo({ top: 0, behavior: "auto" });
+  }, [hydrated, view]);
+
+  const activeTopic = allTopics.find((topic) => topic.id === activeTopicId) ?? topics[0];
   const activePlan = plans[activeTopic.id] ?? defaultPlan(activeTopic);
+  const activeScript = activePlan.scriptSegments?.length
+    ? activePlan.scriptSegments
+    : buildScriptSegments(activeTopic, activePlan);
 
   const filteredTopics = useMemo(() => {
     const needle = query.trim().toLocaleLowerCase("zh-Hant");
-    return topics.filter((topic) => {
+    return allTopics.filter((topic) => {
       const matchesQuery = !needle || [topic.title, topic.hook, topic.angle, topic.series]
         .join(" ")
         .toLocaleLowerCase("zh-Hant")
@@ -270,16 +309,20 @@ export default function Home() {
         && (formulaFilter === "全部公式" || topic.formula === formulaFilter)
         && (categoryFilter === "全部主題" || topic.category === categoryFilter)
         && (riskFilter === "全部風險" || topic.risk === riskFilter)
-        && (!onlyFavorites || favorites.includes(topic.id));
+        && (!onlyFavorites || favorites.includes(topic.id))
+        && (showCompleted || plans[topic.id]?.status !== "已完成");
     });
-  }, [query, formulaFilter, categoryFilter, riskFilter, onlyFavorites, favorites]);
+  }, [allTopics, query, formulaFilter, categoryFilter, riskFilter, onlyFavorites, favorites, plans, showCompleted]);
 
   const visibleTopics = filteredTopics.slice(0, visibleTopicCount);
 
   const plannedTopics = useMemo(() => Object.values(plans)
     .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt)), [plans]);
-
-  const generatorPrompt = `請用「${generatorFormula}」短影音公式，針對「${generatorCategory}」，鎖定「${generatorAudience}」的受眾，在「${generatorSituation}」情境，以「${generatorPurpose}」為內容目的，產出 10 條不重複短影音主題。每條提供：主題名稱、前 3 秒鉤子、單一核心觀點、45–60 秒結構、畫面建議、低壓力 CTA。語氣溫柔、誠實、清楚，不責備、不製造身材羞恥，不捏造案例，不保證減重或療效；健康與飲食宣稱需列出發布前查證項目。`;
+  const completedPlans = plannedTopics.filter((plan) => plan.status === "已完成");
+  const completedBaseCount = topics.filter((topic) => plans[topic.id]?.status === "已完成").length;
+  const remainingBaseCount = topics.length - completedBaseCount;
+  const generatorUnlocked = completedBaseCount === topics.length;
+  const inProgressCount = plannedTopics.filter((plan) => plan.status !== "已完成").length;
 
   function flash(message: string) {
     setToast(message);
@@ -337,9 +380,16 @@ export default function Home() {
   function openPlanner(topic: Topic) {
     setActiveTopicId(topic.id);
     setRemoveConfirming(false);
-    setPlans((current) => current[topic.id]
-      ? current
-      : { ...current, [topic.id]: defaultPlan(topic) });
+    setPlans((current) => {
+      const existing = current[topic.id];
+      if (!existing) return { ...current, [topic.id]: defaultPlan(topic) };
+      if (existing.scriptSegments?.length) return current;
+      const normalized = { ...defaultPlan(topic), ...existing };
+      return {
+        ...current,
+        [topic.id]: { ...normalized, scriptSegments: buildScriptSegments(topic, normalized) },
+      };
+    });
     setView("planner");
   }
 
@@ -352,6 +402,77 @@ export default function Home() {
         updatedAt: new Date().toISOString(),
       },
     }));
+  }
+
+  function setPlanStatus(topic: Topic, status: PlanStatus) {
+    setPlans((current) => {
+      const plan = current[topic.id] ?? defaultPlan(topic);
+      return {
+        ...current,
+        [topic.id]: {
+          ...plan,
+          status,
+          completedAt: status === "已完成" ? (plan.completedAt || new Date().toISOString()) : "",
+          updatedAt: new Date().toISOString(),
+        },
+      };
+    });
+  }
+
+  function updateScriptSegment(index: number, key: keyof Omit<ScriptSegment, "time">, value: string) {
+    setPlans((current) => {
+      const plan = current[activeTopic.id] ?? defaultPlan(activeTopic);
+      const segments = plan.scriptSegments?.length
+        ? plan.scriptSegments
+        : buildScriptSegments(activeTopic, plan);
+      return {
+        ...current,
+        [activeTopic.id]: {
+          ...plan,
+          scriptSegments: segments.map((segment, segmentIndex) => segmentIndex === index
+            ? { ...segment, [key]: value }
+            : segment),
+          updatedAt: new Date().toISOString(),
+        },
+      };
+    });
+  }
+
+  function regenerateActiveScript() {
+    setPlans((current) => {
+      const plan = current[activeTopic.id] ?? defaultPlan(activeTopic);
+      return {
+        ...current,
+        [activeTopic.id]: {
+          ...plan,
+          scriptSegments: buildScriptSegments(activeTopic, plan),
+          updatedAt: new Date().toISOString(),
+        },
+      };
+    });
+    flash("已依最新企劃重新整理完整腳本");
+  }
+
+  function completeActivePlan() {
+    setPlans((current) => {
+      const plan = current[activeTopic.id] ?? defaultPlan(activeTopic);
+      const now = new Date().toISOString();
+      return {
+        ...current,
+        [activeTopic.id]: {
+          ...plan,
+          status: "已完成",
+          completedAt: now,
+          scriptSegments: plan.scriptSegments?.length
+            ? plan.scriptSegments
+            : buildScriptSegments(activeTopic, plan),
+          updatedAt: now,
+        },
+      };
+    });
+    setShowCompleted(false);
+    setView("library");
+    flash("拍攝已完成並歸檔；這個題目已從待選題庫排除");
   }
 
   function setPublishDateAfter(days: number) {
@@ -383,11 +504,12 @@ export default function Home() {
     setCategoryFilter("全部主題");
     setRiskFilter("全部風險");
     setOnlyFavorites(false);
+    setShowCompleted(false);
     setVisibleTopicCount(TOPIC_PAGE_SIZE);
   }
 
   function exportWorkspace() {
-    const data: WorkspaceData = { favorites, plans, activeTopicId };
+    const data: WorkspaceData = { favorites, plans, activeTopicId, customTopics };
     downloadText(`SNL短影音企劃備份_${new Date().toISOString().slice(0, 10)}.json`, JSON.stringify(data, null, 2), "application/json;charset=utf-8");
     flash("工作區備份已匯出");
   }
@@ -401,7 +523,11 @@ export default function Home() {
         const data = JSON.parse(String(reader.result)) as WorkspaceData;
         setFavorites(Array.isArray(data.favorites) ? data.favorites : []);
         setPlans(data.plans ?? {});
-        if (data.activeTopicId) setActiveTopicId(data.activeTopicId);
+        const importedCustomTopics = Array.isArray(data.customTopics) ? data.customTopics : [];
+        setCustomTopics(importedCustomTopics);
+        if (data.activeTopicId && [...topics, ...importedCustomTopics].some((topic) => topic.id === data.activeTopicId)) {
+          setActiveTopicId(data.activeTopicId);
+        }
         flash("備份已匯入");
       } catch {
         flash("這個備份檔無法讀取");
@@ -412,14 +538,41 @@ export default function Home() {
   }
 
   function downloadPlan() {
-    const prompt = buildCodexPrompt(activeTopic, activePlan);
-    const text = `# ${activeTopic.title}\n\n- 公式：${activeTopic.formula}\n- 主題：${activeTopic.category}\n- 狀態：${activePlan.status}\n- 預計發布：${activePlan.publishDate || "未設定"}\n\n## 交給 Codex 的製作指令\n\n${prompt}\n`;
+    const text = formatShootingScript(activeTopic, activePlan, activeScript);
     downloadText(`${activeTopic.id}_${activeTopic.title.replace(/[\\/:*?"<>|]/g, "-")}.md`, text);
-    flash("企劃檔已下載");
+    flash("完整拍攝腳本已下載");
+  }
+
+  function generateNextTopics() {
+    if (!generatorUnlocked) {
+      flash(`先完成目前 80 條，還剩 ${remainingBaseCount} 條`);
+      return;
+    }
+    const nextTopics = generateUniqueTopics(allTopics, {
+      formula: generatorFormula,
+      category: generatorCategory,
+      situation: generatorSituation,
+      audience: generatorAudience,
+      purpose: generatorPurpose,
+    }, 10);
+    if (nextTopics.length === 0) {
+      flash("這組條件暫時沒有可加入的新題目，請換一個旋鈕");
+      return;
+    }
+    setCustomTopics((current) => [...current, ...nextTopics]);
+    setQuery("續題");
+    setFormulaFilter("全部公式");
+    setCategoryFilter("全部主題");
+    setRiskFilter("全部風險");
+    setOnlyFavorites(false);
+    setShowCompleted(false);
+    setVisibleTopicCount(TOPIC_PAGE_SIZE);
+    setView("library");
+    flash(`已加入 ${nextTopics.length} 條去重新題目`);
   }
 
   return (
-    <main className="app-shell">
+    <main className={`app-shell view-${view}`}>
       <header className="topbar">
         <div className="brand-block">
           <div className="brand-mark">S</div>
@@ -462,16 +615,25 @@ export default function Home() {
 
       <section className="hero-strip">
         <div>
-          <p className="eyebrow dark">從靈感到可以開拍</p>
-          <h2>把散落的想法，變成一支有方向的短影音。</h2>
-          <p>挑題目、補企劃、複製給 Codex，接著就能寫腳本與安排拍攝。</p>
+          <p className="eyebrow dark">選好就能直接開拍</p>
+          <h2>選一個題目，完整拍攝腳本已經幫你準備好。</h2>
+          <p>預覽口播、畫面與字幕，拍完按下完成，題目就會自動歸檔、不再重複出現。</p>
         </div>
         <div className="hero-stats" aria-label="工作區統計">
-          <div><strong>80</strong><span>原創題目</span></div>
+          <div><strong>{allTopics.length}</strong><span>總題目</span></div>
           <div><strong>{favorites.length}</strong><span>已收藏</span></div>
-          <div><strong>{plannedTopics.length}</strong><span>企劃進行中</span></div>
-          <div><strong>{plannedTopics.filter((plan) => plan.status === "已完成").length}</strong><span>已完成</span></div>
+          <div><strong>{inProgressCount}</strong><span>製作中</span></div>
+          <div><strong>{completedPlans.length}</strong><span>已完成</span></div>
         </div>
+      </section>
+
+      <section className={`workflow-progress ${generatorUnlocked ? "unlocked" : ""}`} aria-label="首批題庫完成進度">
+        <div className="progress-copy">
+          <span>{generatorUnlocked ? "首批 80 條已完成" : `首批題庫進度 ${completedBaseCount} / ${topics.length}`}</span>
+          <strong>{generatorUnlocked ? "去重新題目已解鎖，可以繼續生產下一批文案。" : `先拍完現有題庫，還有 ${remainingBaseCount} 條；完成的題目會自動從待選區消失。`}</strong>
+        </div>
+        <div className="progress-track" aria-hidden="true"><span style={{ width: `${(completedBaseCount / topics.length) * 100}%` }} /></div>
+        <button className="button secondary small" onClick={() => setView("generator")}>{generatorUnlocked ? "產生下一批 10 條" : "查看續題解鎖進度"}</button>
       </section>
 
       {!session && favorites.length === 0 && plannedTopics.length === 0 && (
@@ -482,10 +644,10 @@ export default function Home() {
       )}
 
       <nav className="view-tabs" aria-label="主要功能">
-        <button className={view === "library" ? "active" : ""} onClick={() => setView("library")}><span>01</span>靈感題庫</button>
-        <button className={view === "planner" ? "active" : ""} onClick={() => setView("planner")}><span>02</span>企劃工作區</button>
-        <button className={view === "generator" ? "active" : ""} onClick={() => setView("generator")}><span>03</span>主題生成器</button>
-        <button className={view === "board" ? "active" : ""} onClick={() => setView("board")}><span>04</span>製作看板</button>
+        <button className={view === "library" ? "active" : ""} onClick={() => setView("library")}><span>01</span>待選題庫</button>
+        <button className={view === "planner" ? "active" : ""} onClick={() => setView("planner")}><span>02</span>拍攝腳本</button>
+        <button className={view === "generator" ? "active" : ""} onClick={() => setView("generator")}><span>03</span>去重續題</button>
+        <button className={view === "board" ? "active" : ""} onClick={() => setView("board")}><span>04</span>完成紀錄</button>
       </nav>
 
       {view === "library" && (
@@ -493,7 +655,7 @@ export default function Home() {
           <div className="section-heading">
             <div>
               <p className="eyebrow dark">IDEA LIBRARY</p>
-              <h2>今天想做哪一種內容？</h2>
+              <h2>下一支要拍什麼？</h2>
             </div>
             <p className="result-count">找到 <strong>{filteredTopics.length}</strong> 條題目</p>
           </div>
@@ -527,15 +689,19 @@ export default function Home() {
             <button className={`favorite-filter ${onlyFavorites ? "active" : ""}`} onClick={() => { setOnlyFavorites((value) => !value); setVisibleTopicCount(TOPIC_PAGE_SIZE); }}>
               {onlyFavorites ? "★" : "☆"} 只看收藏
             </button>
+            <button className={`completed-filter ${showCompleted ? "active" : ""}`} onClick={() => { setShowCompleted((value) => !value); setVisibleTopicCount(TOPIC_PAGE_SIZE); }}>
+              {showCompleted ? "隱藏已完成" : "顯示已完成"}
+            </button>
           </div>
 
           <div className="topic-grid">
             {visibleTopics.map((topic) => (
-              <article className="topic-card" key={topic.id}>
+              <article className={`topic-card ${plans[topic.id]?.status === "已完成" ? "completed" : ""}`} key={topic.id}>
                 <div className="card-topline">
                   <div className="badge-row">
                     <span className={`category-badge ${categoryColors[topic.category]}`}>{topic.category}</span>
                     <span className={`risk-badge risk-${topic.risk}`}>風險 {topic.risk}</span>
+                    {plans[topic.id]?.status === "已完成" && <span className="completed-badge">已完成</span>}
                   </div>
                   <button className="icon-button" aria-label={favorites.includes(topic.id) ? "取消收藏" : "收藏題目"} onClick={() => toggleFavorite(topic.id)}>
                     {favorites.includes(topic.id) ? "★" : "☆"}
@@ -556,7 +722,7 @@ export default function Home() {
                 </details>
                 <div className="card-actions">
                   <span>{topic.id} · {topic.series}</span>
-                  <button className="button primary" onClick={() => openPlanner(topic)}>開始企劃 →</button>
+                  <button className="button primary" onClick={() => openPlanner(topic)}>{plans[topic.id]?.status === "已完成" ? "查看完成腳本 →" : "直接看完整腳本 →"}</button>
                 </div>
               </article>
             ))}
@@ -574,8 +740,8 @@ export default function Home() {
           {filteredTopics.length === 0 && (
             <div className="empty-state">
               <div>⌕</div>
-              <h3>目前沒有符合的題目</h3>
-              <p>換一個關鍵字，或清除部分篩選條件。</p>
+              <h3>{completedBaseCount === topics.length && !showCompleted ? "首批待選題目已全部完成" : "目前沒有符合的題目"}</h3>
+              <p>{completedBaseCount === topics.length && !showCompleted ? "可以前往去重續題，產生下一批 10 條文案。" : "換一個關鍵字，或清除部分篩選條件。"}</p>
               <button className="button primary" onClick={clearLibraryFilters}>清除篩選</button>
             </div>
           )}
@@ -586,57 +752,80 @@ export default function Home() {
         <section className="page-section planner-view">
           <div className="section-heading">
             <div>
-              <p className="eyebrow dark">PRODUCTION BRIEF</p>
-              <h2>把主題補成可製作的企劃</h2>
+              <p className="eyebrow dark">SHOOTING SCRIPT</p>
+              <h2>完整腳本，打開就能照著拍</h2>
             </div>
-            <button className="button ghost" onClick={() => setView("library")}>← 回題庫換題目</button>
+            <button className="button ghost" onClick={() => setView("library")}>← 回待選題庫</button>
           </div>
 
-          <div className="planner-layout">
-            <aside className="selected-topic-panel">
+          <div className="planner-layout script-layout">
+            <aside className="selected-topic-panel compact-topic-panel">
               <p className="panel-kicker">目前主題</p>
               <div className="badge-row">
                 <span className={`category-badge ${categoryColors[activeTopic.category]}`}>{activeTopic.category}</span>
                 <span className={`risk-badge risk-${activeTopic.risk}`}>風險 {activeTopic.risk}</span>
+                {activePlan.status === "已完成" && <span className="completed-badge">已完成</span>}
               </div>
               <h3>{activeTopic.title}</h3>
               <p className="formula-label">{activeTopic.formula}</p>
               <blockquote>{activeTopic.hook}</blockquote>
               <dl className="topic-facts">
                 <div><dt>核心觀點</dt><dd>{activeTopic.angle}</dd></div>
-                <div><dt>建議畫面</dt><dd>{activeTopic.visual}</dd></div>
-                <div><dt>原始 CTA</dt><dd>{activeTopic.cta}</dd></div>
                 <div className="warning-fact"><dt>發布前確認</dt><dd>{activeTopic.check}</dd></div>
               </dl>
+              {activePlan.completedAt && <p className="completed-at">完成時間：{new Date(activePlan.completedAt).toLocaleString("zh-TW")}</p>}
             </aside>
 
-            <div className="brief-form">
-              <div className="form-row three">
-                <label><span>製作狀態</span><select value={activePlan.status} onChange={(event) => updatePlan("status", event.target.value as PlanStatus)}>{statuses.map((status) => <option key={status}>{status}</option>)}</select></label>
+            <div className="script-workspace">
+              <div className="script-workspace-heading">
+                <div><p className="panel-kicker">完整拍攝稿</p><h3>{activeTopic.title}</h3><p>{activeScript.length} 段口播、畫面與字幕；內容可直接修改並自動保存。</p></div>
+                <button className="button secondary" type="button" onClick={regenerateActiveScript}>依企劃重新生成</button>
+              </div>
+
+              <section className="script-preview-panel" aria-label="完整拍攝腳本預覽">
+                {activeScript.map((segment, index) => (
+                  <article className="script-segment" key={`${segment.time}-${index}`}>
+                    <div className="segment-time"><span>{String(index + 1).padStart(2, "0")}</span><strong>{segment.time}</strong></div>
+                    <div className="segment-content">
+                      <label className="voiceover-field"><span>口播</span><textarea value={segment.voiceover} onChange={(event) => updateScriptSegment(index, "voiceover", event.target.value)} rows={3} /></label>
+                      <div className="script-support-fields">
+                        <label><span>拍攝畫面</span><textarea value={segment.visual} onChange={(event) => updateScriptSegment(index, "visual", event.target.value)} rows={2} /></label>
+                        <label><span>畫面字幕</span><input value={segment.subtitle} onChange={(event) => updateScriptSegment(index, "subtitle", event.target.value)} /></label>
+                      </div>
+                    </div>
+                  </article>
+                ))}
+              </section>
+
+              <div className="compact-plan-fields after-script-fields">
+                <label><span>製作狀態</span><select value={activePlan.status} onChange={(event) => setPlanStatus(activeTopic, event.target.value as PlanStatus)}>{statuses.map((status) => <option key={status}>{status}</option>)}</select></label>
                 <label><span>發布平台</span><select value={activePlan.platform} onChange={(event) => updatePlan("platform", event.target.value)}><option>Instagram Reels</option><option>Threads</option><option>小紅書</option><option>TikTok</option><option>YouTube Shorts</option></select></label>
                 <label><span>影片長度</span><select value={activePlan.duration} onChange={(event) => updatePlan("duration", event.target.value)}><option>30 秒</option><option>45–60 秒</option><option>60–90 秒</option></select></label>
-              </div>
-              <div className="form-row two">
-                <label><span>目標受眾</span><textarea value={activePlan.audience} onChange={(event) => updatePlan("audience", event.target.value)} rows={3} /></label>
-                <label><span>內容目的</span><textarea value={activePlan.objective} onChange={(event) => updatePlan("objective", event.target.value)} rows={3} /></label>
-              </div>
-              <label className="full-field"><span>前 3 秒鉤子</span><textarea value={activePlan.opening} onChange={(event) => updatePlan("opening", event.target.value)} rows={3} /></label>
-              <label className="full-field"><span>唯一核心觀點</span><textarea value={activePlan.keyMessage} onChange={(event) => updatePlan("keyMessage", event.target.value)} rows={3} /></label>
-              <div className="form-row two">
-                <label><span>畫面與鏡頭</span><textarea value={activePlan.shots} onChange={(event) => updatePlan("shots", event.target.value)} rows={5} /></label>
-                <label><span>單一 CTA</span><textarea value={activePlan.cta} onChange={(event) => updatePlan("cta", event.target.value)} rows={5} /></label>
-              </div>
-              <div className="form-row two compact">
                 <label><span>預計發布日期</span><input type="date" value={activePlan.publishDate} onChange={(event) => updatePlan("publishDate", event.target.value)} /><span className="date-shortcuts"><button type="button" onClick={() => setPublishDateAfter(1)}>明天</button><button type="button" onClick={() => setPublishDateAfter(7)}>7 天後</button></span></label>
-                <label><span>內部備註</span><textarea value={activePlan.notes} onChange={(event) => updatePlan("notes", event.target.value)} placeholder="素材、場景、服裝或審稿事項" rows={3} /></label>
               </div>
-              <div className="planner-actions">
+
+              <details className="advanced-brief">
+                <summary>調整腳本來源與內部備註</summary>
+                <div className="advanced-brief-grid">
+                  <label><span>目標受眾</span><textarea value={activePlan.audience} onChange={(event) => updatePlan("audience", event.target.value)} rows={2} /></label>
+                  <label><span>內容目的</span><textarea value={activePlan.objective} onChange={(event) => updatePlan("objective", event.target.value)} rows={2} /></label>
+                  <label><span>前 3 秒鉤子</span><textarea value={activePlan.opening} onChange={(event) => updatePlan("opening", event.target.value)} rows={2} /></label>
+                  <label><span>唯一核心觀點</span><textarea value={activePlan.keyMessage} onChange={(event) => updatePlan("keyMessage", event.target.value)} rows={2} /></label>
+                  <label><span>畫面與鏡頭</span><textarea value={activePlan.shots} onChange={(event) => updatePlan("shots", event.target.value)} rows={3} /></label>
+                  <label><span>單一 CTA</span><textarea value={activePlan.cta} onChange={(event) => updatePlan("cta", event.target.value)} rows={3} /></label>
+                  <label className="full-field"><span>內部備註</span><textarea value={activePlan.notes} onChange={(event) => updatePlan("notes", event.target.value)} placeholder="素材、場景、服裝或審稿事項" rows={3} /></label>
+                </div>
+                <button className="button secondary" type="button" onClick={regenerateActiveScript}>套用調整並重新生成腳本</button>
+              </details>
+
+              <div className="planner-actions script-actions">
                 <div><strong>{session ? cloudStatusLabel : "已自動儲存"}</strong><span>{session ? "雲端同步失敗時仍會保存在本機瀏覽器" : "目前保存在本機；登入後可跨裝置同步"}</span></div>
                 {plans[activeTopic.id] && (removeConfirming ? (
                   <span className="remove-confirm"><b>確定移除？</b><button type="button" onClick={removeActivePlan}>確定</button><button type="button" onClick={() => setRemoveConfirming(false)}>取消</button></span>
                 ) : <button className="button danger" type="button" onClick={() => setRemoveConfirming(true)}>移除企劃</button>)}
-                <button className="button secondary" onClick={downloadPlan}>下載企劃</button>
-                <button className="button primary large" onClick={() => copyText(buildCodexPrompt(activeTopic, activePlan), "已複製，可直接貼給 Codex")}>複製給 Codex ✦</button>
+                <button className="button ghost" onClick={downloadPlan}>下載腳本</button>
+                <button className="button secondary" onClick={() => copyText(formatShootingScript(activeTopic, activePlan, activeScript), "完整拍攝腳本已複製")}>複製完整腳本</button>
+                <button className="button primary large complete-button" onClick={completeActivePlan} disabled={activePlan.status === "已完成"}>{activePlan.status === "已完成" ? "已完成拍攝 ✓" : "拍攝完成並歸檔 ✓"}</button>
               </div>
             </div>
           </div>
@@ -646,26 +835,40 @@ export default function Home() {
       {view === "generator" && (
         <section className="page-section generator-view">
           <div className="section-heading">
-            <div><p className="eyebrow dark">IDEA ENGINE</p><h2>換幾個條件，就長出下一批題目</h2></div>
-            <p className="result-count"><strong>12,000</strong> 種可組合方向</p>
+            <div><p className="eyebrow dark">DEDUPLICATED IDEA ENGINE</p><h2>完成首批 80 條，再接著生產新文案</h2></div>
+            <p className="result-count"><strong>{customTopics.length}</strong> 條已新增續題</p>
           </div>
           <div className="generator-layout">
             <div className="generator-controls">
               <div className="step-number">01</div>
-              <h3>選擇五個內容旋鈕</h3>
-              <p>每次只要換其中一項，同一個核心觀點就能長出不同題目。</p>
+              <h3>選下一批內容方向</h3>
+              <p>系統會比對目前所有題目的標題與前 3 秒鉤子，避免重複後再一次加入 10 條。</p>
               <label><span>爆款公式</span><select value={generatorFormula} onChange={(event) => setGeneratorFormula(event.target.value)}>{formulas.map((formula) => <option key={formula}>{formula}</option>)}</select></label>
               <label><span>主題分類</span><select value={generatorCategory} onChange={(event) => setGeneratorCategory(event.target.value)}>{categories.map((category) => <option key={category}>{category}</option>)}</select></label>
               <label><span>生活情境</span><select value={generatorSituation} onChange={(event) => setGeneratorSituation(event.target.value)}>{situations.map((situation) => <option key={situation}>{situation}</option>)}</select></label>
               <label><span>受眾狀態</span><select value={generatorAudience} onChange={(event) => setGeneratorAudience(event.target.value)}>{audiences.map((audience) => <option key={audience}>{audience}</option>)}</select></label>
               <label><span>內容目的</span><select value={generatorPurpose} onChange={(event) => setGeneratorPurpose(event.target.value)}>{purposes.map((purpose) => <option key={purpose}>{purpose}</option>)}</select></label>
             </div>
-            <div className="prompt-panel">
+            <div className={`prompt-panel generator-status-panel ${generatorUnlocked ? "unlocked" : "locked"}`}>
               <div className="step-number coral">02</div>
-              <div className="prompt-heading"><div><h3>交給 Codex 的產題指令</h3><p>複製後貼到對話，就能再產出 10 條。</p></div><span>已套用 SNL 安全語氣</span></div>
-              <pre>{generatorPrompt}</pre>
-              <button className="button primary large" onClick={() => copyText(generatorPrompt, "產題指令已複製")}>複製產題指令 ✦</button>
-              <div className="generator-note"><strong>建議節奏</strong><p>先一次產 10 條 → 選 2 條進企劃 → 寫腳本 → 拍攝後回看數據，再決定下一批要換哪個旋鈕。</p></div>
+              <div className="prompt-heading">
+                <div><h3>{generatorUnlocked ? "去重續題已解鎖" : `還差 ${remainingBaseCount} 條完成`}</h3><p>{generatorUnlocked ? "選好方向後，網站會直接把下一批加入待選題庫。" : "先把目前的 80 條拍攝完成並歸檔，才會開放下一批，避免題庫越堆越多。"}</p></div>
+                <span>{generatorUnlocked ? "可以直接產生" : `進度 ${completedBaseCount} / ${topics.length}`}</span>
+              </div>
+              <div className="generator-summary">
+                <p><span>公式</span><strong>{generatorFormula}</strong></p>
+                <p><span>領域</span><strong>{generatorCategory}</strong></p>
+                <p><span>情境</span><strong>{generatorSituation}</strong></p>
+                <p><span>受眾</span><strong>{generatorAudience}</strong></p>
+                <p><span>目的</span><strong>{generatorPurpose}</strong></p>
+              </div>
+              <div className="dedupe-stats">
+                <div><strong>{allTopics.length}</strong><span>目前總題目</span></div>
+                <div><strong>標題＋鉤子</strong><span>雙重去重</span></div>
+                <div><strong>10</strong><span>每批新增</span></div>
+              </div>
+              <button className="button primary large generator-button" onClick={generateNextTopics} disabled={!generatorUnlocked}>{generatorUnlocked ? "產生 10 條去重新題目 ✦" : `先完成剩下 ${remainingBaseCount} 條`}</button>
+              <div className="generator-note"><strong>系統會自動處理</strong><p>新題目會附上完整企劃資料，選取後立即看到可拍攝腳本；已完成過的題目仍保留在完成紀錄，但不會再次出現在待選結果。</p></div>
             </div>
           </div>
         </section>
@@ -674,11 +877,11 @@ export default function Home() {
       {view === "board" && (
         <section className="page-section board-view">
           <div className="section-heading">
-            <div><p className="eyebrow dark">PRODUCTION BOARD</p><h2>所有企劃現在走到哪裡？</h2></div>
-            <button className="button primary" onClick={() => setView("library")}>＋ 新增企劃</button>
+            <div><p className="eyebrow dark">PRODUCTION RECORD</p><h2>企劃進度與拍攝完成紀錄</h2></div>
+            <button className="button primary" onClick={() => setView("library")}>＋ 選下一支影片</button>
           </div>
           {plannedTopics.length === 0 ? (
-            <div className="empty-state"><div>▦</div><h3>還沒有加入企劃的題目</h3><p>先到靈感題庫挑一條，按下「開始企劃」。</p><button className="button primary" onClick={() => setView("library")}>前往題庫</button></div>
+            <div className="empty-state"><div>◎</div><h3>還沒有企劃紀錄</h3><p>回到待選題庫，點開任一題就能看到完整拍攝腳本。</p><button className="button primary" onClick={() => setView("library")}>去選題目</button></div>
           ) : (
             <div className="kanban">
               {statuses.map((status) => {
@@ -688,7 +891,7 @@ export default function Home() {
                     <header><span className={`column-dot status-${status}`} /> <h3>{status}</h3><b>{statusPlans.length}</b></header>
                     <div className="kanban-list">
                       {statusPlans.map((plan) => {
-                        const topic = topics.find((item) => item.id === plan.topicId);
+                        const topic = allTopics.find((item) => item.id === plan.topicId);
                         if (!topic) return null;
                         return (
                           <article className="kanban-card" key={plan.topicId}>
@@ -696,8 +899,9 @@ export default function Home() {
                             <h4>{topic.title}</h4>
                             <p>{plan.platform} · {plan.duration}</p>
                             {plan.publishDate && <time>預計 {plan.publishDate}</time>}
-                            <select value={plan.status} aria-label={`${topic.title}的製作狀態`} onChange={(event) => setPlans((current) => ({ ...current, [topic.id]: { ...plan, status: event.target.value as PlanStatus, updatedAt: new Date().toISOString() } }))}>{statuses.map((item) => <option key={item}>{item}</option>)}</select>
-                            <button onClick={() => { setActiveTopicId(topic.id); setView("planner"); }}>開啟企劃 →</button>
+                            {plan.completedAt && <time>完成 {new Date(plan.completedAt).toLocaleString("zh-TW")}</time>}
+                            <select value={plan.status} aria-label={`${topic.title}的製作狀態`} onChange={(event) => setPlanStatus(topic, event.target.value as PlanStatus)}>{statuses.map((item) => <option key={item}>{item}</option>)}</select>
+                            <button onClick={() => { setActiveTopicId(topic.id); setRemoveConfirming(false); setView("planner"); }}>{plan.status === "已完成" ? "查看完成腳本 →" : "開啟拍攝腳本 →"}</button>
                           </article>
                         );
                       })}
