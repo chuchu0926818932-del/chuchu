@@ -152,6 +152,15 @@ export function formatShootingScript(topic: Topic, plan: ScriptPlanInput, segmen
   return `# ${topic.title}\n\n- 平台：${plan.platform}\n- 長度：${plan.duration}\n- 公式：${topic.formula}\n- 內容類別：${topic.category}\n- 文案類型：${topic.contentType || "信任型"}\n\n## 靶心人故事線\n\n${topic.storyline || topic.structure}\n\n## 故事七大元素\n\n${topic.storyElements || "請補上時間地點、動作、想法、情緒、對話、轉折、行動。"}\n\n## 三合一文案結構\n\n${topic.threeLayer || "心理學痛點＋銷售學使命感＋故事學轉化與希望。"}\n\n${segmentText}\n\n## 發布前確認\n\n${topic.check}\n`;
 }
 
+// Keep uses this clean shooting version: it is meant for review and filming, not for exposing the internal writing framework.
+export function formatKeepScript(topic: Topic, plan: ScriptPlanInput, segments: ScriptSegment[]) {
+  const voiceover = segments.map((segment) => `【${segment.time}】\n${segment.voiceover}`).join("\n\n");
+  const visuals = segments.map((segment) => `【${segment.time}】${segment.visual}`).join("\n");
+  const subtitles = segments.map((segment) => `【${segment.time}】${segment.subtitle}`).join("\n");
+
+  return `【28天影片】${topic.title}\n\n平台：${plan.platform}\n長度：${plan.duration}\n主題：${topic.category}\n\n🎙 完整口播\n\n${voiceover}\n\n🎬 拍攝畫面\n\n${visuals}\n\n💬 字幕\n\n${subtitles}\n\n📌 發布前確認\n\n${topic.check}\n`;
+}
+
 function normalize(value: string) {
   return value.toLocaleLowerCase("zh-Hant").replace(/[^\p{L}\p{N}]/gu, "");
 }

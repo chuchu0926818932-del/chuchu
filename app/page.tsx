@@ -2,7 +2,7 @@
 
 import type { Session } from "@supabase/supabase-js";
 import { ChangeEvent, FormEvent, useEffect, useMemo, useRef, useState } from "react";
-import { buildScriptSegments, formatShootingScript, generateUniqueTopics, type ScriptSegment } from "./script-engine";
+import { buildScriptSegments, formatKeepScript, formatShootingScript, generateUniqueTopics, type ScriptSegment } from "./script-engine";
 import { supabase, supabaseConfigured } from "./supabase";
 import { categories, formulas, Topic, topics } from "./topics";
 
@@ -45,6 +45,7 @@ type CloudStatus = "local" | "connecting" | "syncing" | "synced" | "error";
 // v3 intentionally starts a clean workspace because the prior 80-topic library was retired.
 const STORAGE_KEY = "snl-short-video-studio-v3";
 const TOPIC_PAGE_SIZE = 18;
+const KEEP_LABEL_URL = "https://keep.google.com/#label/28%E5%A4%A9%E5%BD%B1%E7%89%87";
 const statuses: PlanStatus[] = ["待規劃", "撰稿中", "待拍攝", "後製中", "已完成"];
 const situations = ["下班很累", "週末聚餐", "半夜想吃東西", "照鏡子很焦慮", "社群比較後低落", "久坐上班", "早上趕時間", "旅行或出差", "生理期前後", "重新開始的第一週"];
 const audiences = ["剛開始改變", "知道方法但做不到", "反覆減肥很疲累", "害怕失敗", "容易自責", "想穩定照顧自己"];
@@ -455,7 +456,19 @@ export default function Home() {
     flash("已依最新企劃重新整理完整腳本");
   }
 
-  function completeActivePlan() {
+  async function completeActivePlan() {
+    // Open the tab first, while this click is still a trusted user gesture, so popup blockers do not interrupt the flow.
+    const keepTab = window.open(KEEP_LABEL_URL, "_blank", "noopener,noreferrer");
+    const scriptForKeep = formatKeepScript(activeTopic, activePlan, activeScript);
+    let copiedToClipboard = false;
+
+    try {
+      await navigator.clipboard.writeText(scriptForKeep);
+      copiedToClipboard = true;
+    } catch {
+      // The plan is still safely archived even if a browser has disabled clipboard access.
+    }
+
     setPlans((current) => {
       const plan = current[activeTopic.id] ?? defaultPlan(activeTopic);
       const now = new Date().toISOString();
@@ -474,7 +487,13 @@ export default function Home() {
     });
     setShowCompleted(false);
     setView("library");
-    flash("拍攝已完成並歸檔；這個題目已從待選題庫排除");
+    if (copiedToClipboard && keepTab) {
+      flash("已歸檔，完整文案已複製；Keep 已在新分頁開啟，直接貼上即可");
+    } else if (copiedToClipboard) {
+      flash("已歸檔，完整文案已複製；請手動開啟 Keep 的 28 天影片標籤貼上");
+    } else {
+      flash("企劃已完成並歸檔；瀏覽器未允許複製，請在 Keep 中手動複製腳本");
+    }
   }
 
   function setPublishDateAfter(days: number) {
@@ -828,7 +847,7 @@ export default function Home() {
                 ) : <button className="button danger" type="button" onClick={() => setRemoveConfirming(true)}>移除企劃</button>)}
                 <button className="button ghost" onClick={downloadPlan}>下載腳本</button>
                 <button className="button secondary" onClick={() => copyText(formatShootingScript(activeTopic, activePlan, activeScript), "完整拍攝腳本已複製")}>複製完整腳本</button>
-                <button className="button primary large complete-button" onClick={completeActivePlan} disabled={activePlan.status === "已完成"}>{activePlan.status === "已完成" ? "已完成拍攝 ✓" : "拍攝完成並歸檔 ✓"}</button>
+                <button className="button primary large complete-button" onClick={() => void completeActivePlan()} disabled={activePlan.status === "已完成"}>{activePlan.status === "已完成" ? "已完成拍攝 ✓" : "拍攝完成並歸檔・複製到 Keep ✓"}</button>
               </div>
             </div>
           </div>

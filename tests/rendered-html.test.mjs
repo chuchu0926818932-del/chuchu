@@ -53,6 +53,10 @@ test("ships 80 topics, direct scripts, completion filtering and deduplicated con
   assert.match(pageSource, /localStorage/);
   assert.match(pageSource, /buildScriptSegments/);
   assert.match(pageSource, /completeActivePlan/);
+  assert.match(pageSource, /KEEP_LABEL_URL/);
+  assert.match(pageSource, /keep\.google\.com\/#label\/28%E5%A4%A9%E5%BD%B1%E7%89%87/);
+  assert.match(pageSource, /window\.open\(KEEP_LABEL_URL/);
+  assert.match(pageSource, /formatKeepScript/);
   assert.match(pageSource, /generatorUnlocked/);
   assert.match(pageSource, /customTopics/);
   assert.match(pageSource, /拍攝完成並歸檔/);
@@ -64,6 +68,8 @@ test("ships 80 topics, direct scripts, completion filtering and deduplicated con
   assert.match(scriptSource, /topic\.empathy/);
   assert.match(scriptSource, /topic\.action/);
   assert.match(scriptSource, /topic\.reframe/);
+  assert.match(scriptSource, /formatKeepScript/);
+  assert.match(scriptSource, /完整口播/);
   assert.doesNotMatch(scriptSource, /故事目標：|故事裡真正的阻礙是：|故事的意外是：/);
   assert.match(pageSource, /exportWorkspace/);
   assert.match(pageSource, /importWorkspace/);
