@@ -764,6 +764,7 @@ export default function Home() {
               <div className="badge-row">
                 <span className={`category-badge ${categoryColors[activeTopic.category]}`}>{activeTopic.category}</span>
                 <span className={`risk-badge risk-${activeTopic.risk}`}>風險 {activeTopic.risk}</span>
+                <span className="content-type-badge">{activeTopic.contentType || "信任型"}</span>
                 {activePlan.status === "已完成" && <span className="completed-badge">已完成</span>}
               </div>
               <h3>{activeTopic.title}</h3>
@@ -778,7 +779,7 @@ export default function Home() {
 
             <div className="script-workspace">
               <div className="script-workspace-heading">
-                <div><p className="panel-kicker">完整拍攝稿</p><h3>{activeTopic.title}</h3><p>{activeScript.length} 段口播、畫面與字幕；內容可直接修改並自動保存。</p></div>
+                <div><p className="panel-kicker">完整拍攝稿</p><h3>{activeTopic.title}</h3><p className="script-framework-label">{activeTopic.contentType || "信任型"} · 靶心人七段故事 · 三合一文案</p><p>{activeScript.length} 段口播、畫面與字幕；內容可直接修改並自動保存。</p></div>
                 <button className="button secondary" type="button" onClick={regenerateActiveScript}>依企劃重新生成</button>
               </div>
 

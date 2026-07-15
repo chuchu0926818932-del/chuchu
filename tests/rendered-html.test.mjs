@@ -40,6 +40,10 @@ test("ships 80 topics, direct scripts, completion filtering and deduplicated con
   ]);
 
   assert.equal((topicsSource.match(/"id": "T\d{3}"/g) ?? []).length, 80);
+  assert.equal((topicsSource.match(/"contentType":/g) ?? []).length, 80);
+  assert.equal((topicsSource.match(/靶心人公式：/g) ?? []).length, 80);
+  assert.equal((topicsSource.match(/時間地點：/g) ?? []).length, 80);
+  assert.equal((topicsSource.match(/三合一：|心理學：/g) ?? []).length >= 80, true);
   assert.match(pageSource, /localStorage/);
   assert.match(pageSource, /buildScriptSegments/);
   assert.match(pageSource, /completeActivePlan/);

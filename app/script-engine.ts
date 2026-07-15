@@ -79,11 +79,11 @@ const hookFrames = [
   (_situation: string, focus: string) => `如果${focus}只靠更努力，為什麼你已經這麼累了？`,
   (situation: string, focus: string) => `${situation}不用做到滿分，先把${focus}縮小一點。`,
   (_situation: string, focus: string) => `你不是做不到，可能只是把${focus}的門檻設得太高。`,
-  (situation: string, focus: string) => `${situation}之前，先別急著用同一套標準要求自己。`,
+  (situation: string, focus: string) => { void focus; return `${situation}之前，先別急著用同一套標準要求自己。`; },
   (_situation: string, focus: string) => `${focus}沒有唯一答案，先看完整情境。`,
-  (situation: string, focus: string) => `這張提醒卡，是留給每次${situation}就忘了照顧自己的你。`,
+  (situation: string, focus: string) => { void focus; return `這張提醒卡，是留給每次${situation}就忘了照顧自己的你。`; },
   (_situation: string, focus: string) => `今天不需要全部完成，${focus}先做這一步就好。`,
-  (situation: string, focus: string) => `${situation}時身體其實有訊號，只是你太忙沒有看見。`,
+  (situation: string, focus: string) => { void focus; return `${situation}時身體其實有訊號，只是你太忙沒有看見。`; },
   (_situation: string, focus: string) => `又覺得自己失敗了？先用${focus}把節奏接回來。`,
 ];
 
@@ -106,6 +106,11 @@ function shortSubtitle(value: string, max = 22) {
   return compact.length > max ? `${compact.slice(0, max)}…` : compact;
 }
 
+function storyPart(topic: Topic, label: string) {
+  const match = topic.storyline?.match(new RegExp(`${label}：([^→]+)`));
+  return match?.[1]?.trim() || "先把注意力帶回當下，做一個今天做得到的小版本";
+}
+
 function timecodes(duration: string) {
   if (duration === "30 秒") return ["0–3 秒", "3–8 秒", "8–15 秒", "15–22 秒", "22–27 秒", "27–30 秒"];
   if (duration === "60–90 秒") return ["0–5 秒", "5–18 秒", "18–38 秒", "38–60 秒", "60–75 秒", "75–90 秒"];
@@ -126,7 +131,7 @@ export function buildScriptSegments(topic: Topic, plan: ScriptPlanInput): Script
     },
     {
       time: times[1],
-      voiceover: sentence(`如果你也是${audience}，遇到「${topic.title}」時，先不要急著把問題全部怪在自己身上`),
+      voiceover: sentence(`如果你也是${audience}，遇到「${topic.title}」時，先不要急著把問題全部怪在自己身上。故事裡真正的阻礙是：${storyPart(topic, "阻礙")}`),
       visual: `切生活情境 B-roll：${topic.visual}；保留一個真實、不完美的停頓。`,
       subtitle: "先別急著責怪自己",
     },
@@ -138,13 +143,13 @@ export function buildScriptSegments(topic: Topic, plan: ScriptPlanInput): Script
     },
     {
       time: times[3],
-      voiceover: sentence(`今天先做一個小版本。${topic.structure.replace(/\d+[–-]\d+秒：/g, "").replace(/｜/g, "；")}`),
+      voiceover: sentence(`今天先做一個小版本：${storyPart(topic, "努力")}。接著看看會得到什麼結果：${storyPart(topic, "結果")}`),
       visual: `${plan.shots || topic.visual}；依順序切成 2–3 個可跟做的鏡頭。`,
       subtitle: "今天只做一個小版本",
     },
     {
       time: times[4],
-      voiceover: sentence(`這不是要用一支影片解決所有狀況。發布前請記得：${topic.check}`),
+      voiceover: sentence(`這不是要用一支影片解決所有狀況。故事的意外是：${storyPart(topic, "意外")}。發布前請記得：${topic.check}`),
       visual: "正面近景，語速放慢；右下角顯示「依個人情況調整」與必要的專業提醒。",
       subtitle: "先看個人情況與安全提醒",
     },
@@ -159,7 +164,7 @@ export function buildScriptSegments(topic: Topic, plan: ScriptPlanInput): Script
 
 export function formatShootingScript(topic: Topic, plan: ScriptPlanInput, segments: ScriptSegment[]) {
   const segmentText = segments.map((segment) => `## ${segment.time}\n\n口播：${segment.voiceover}\n\n畫面：${segment.visual}\n\n字幕：${segment.subtitle}`).join("\n\n---\n\n");
-  return `# ${topic.title}\n\n- 平台：${plan.platform}\n- 長度：${plan.duration}\n- 公式：${topic.formula}\n- 內容類別：${topic.category}\n\n${segmentText}\n\n## 發布前確認\n\n${topic.check}\n`;
+  return `# ${topic.title}\n\n- 平台：${plan.platform}\n- 長度：${plan.duration}\n- 公式：${topic.formula}\n- 內容類別：${topic.category}\n- 文案類型：${topic.contentType || "信任型"}\n\n## 靶心人故事線\n\n${topic.storyline || topic.structure}\n\n## 故事七大元素\n\n${topic.storyElements || "請補上時間地點、動作、想法、情緒、對話、轉折、行動。"}\n\n## 三合一文案結構\n\n${topic.threeLayer || "心理學痛點＋銷售學使命感＋故事學轉化與希望。"}\n\n${segmentText}\n\n## 發布前確認\n\n${topic.check}\n`;
 }
 
 function normalize(value: string) {
@@ -203,6 +208,10 @@ export function generateUniqueTopics(existingTopics: Topic[], options: TopicGene
       risk: guide.risk,
       check: guide.check,
       series: `續題・${options.formula}`,
+      contentType: options.purpose === "導向免費工具" ? "賺錢型" : options.formula === "情緒故事" ? "心情型" : "信任型",
+      storyline: `目標：在「${options.situation}」時完成一個可持續的小改變 → 阻礙：${options.audience}常被情緒與生活節奏卡住 → 努力：先停下來播放一段靜心音樂，辨認當下的需要 → 結果：找到一個做得到的下一步 → 意外：原來不必完美也能開始 → 轉彎：把自責轉成可被照顧的選擇 → 結局：讓觀眾帶走明天能實作的行動`,
+      storyElements: `時間地點：${options.situation}；動作：停下來、呼吸並寫下一句感受；想法：「我現在真正需要的是什麼？」；情緒：疲累、焦慮或期待；對話：「我先不用解決全部。」；轉折：看見情緒背後的需要；行動：完成一個低門檻版本。`,
+      threeLayer: `心理學：理解${options.audience}的痛點；銷售學：讓觀眾感覺「我就是你」並看見方法的價值；故事學：從卡住轉向希望與下一步。`,
     });
     usedTitles.add(normalize(title));
     usedHooks.add(normalize(hook));

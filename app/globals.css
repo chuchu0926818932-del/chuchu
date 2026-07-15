@@ -147,6 +147,7 @@ textarea { resize: vertical; line-height: 1.65; }
 .badge-row { display: flex; flex-wrap: wrap; gap: 6px; }
 .category-badge, .risk-badge { display: inline-flex; align-items: center; border-radius: 999px; padding: 5px 9px; font-size: 10px; font-weight: 800; }
 .completed-badge { display: inline-flex; align-items: center; padding: 5px 9px; border-radius: 999px; background: #d8eee2; color: #246c50; font-size: 10px; font-weight: 900; }
+.content-type-badge { display: inline-flex; align-items: center; padding: 5px 9px; border-radius: 999px; background: #f2e8d7; color: #87652c; font-size: 10px; font-weight: 900; }
 .category-badge.mint { background: #dff1df; color: #346b3c; }
 .category-badge.lavender { background: #ece5f7; color: #684c88; }
 .category-badge.rose { background: #f8dfdf; color: #8f4d50; }
@@ -192,6 +193,7 @@ textarea { resize: vertical; line-height: 1.65; }
 .script-workspace-heading .panel-kicker { margin-bottom: 6px; }
 .script-workspace-heading h3 { margin: 0 0 4px; font-size: 22px; }
 .script-workspace-heading p:last-child { margin: 0; color: var(--muted); font-size: 12px; }
+.script-framework-label { margin: 0 0 5px !important; color: var(--coral-deep) !important; font-size: 11px !important; font-weight: 900; }
 .compact-plan-fields { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; margin-bottom: 16px; padding: 12px; background: var(--paper); border: 1px solid var(--line); border-radius: 12px; }
 .after-script-fields { margin: 16px 0 0; }
 .compact-plan-fields input, .compact-plan-fields select { padding: 9px 10px; font-size: 12px; }
