@@ -35,14 +35,15 @@ type WorkspaceData = {
 };
 
 type CloudPlanEnvelope = {
-  __workspaceVersion: 2;
+  __workspaceVersion: 3;
   items: Record<string, SavedPlan>;
   customTopics: Topic[];
 };
 
 type CloudStatus = "local" | "connecting" | "syncing" | "synced" | "error";
 
-const STORAGE_KEY = "snl-short-video-studio-v1";
+// v3 intentionally starts a clean workspace because the prior 80-topic library was retired.
+const STORAGE_KEY = "snl-short-video-studio-v3";
 const TOPIC_PAGE_SIZE = 18;
 const statuses: PlanStatus[] = ["待規劃", "撰稿中", "待拍攝", "後製中", "已完成"];
 const situations = ["下班很累", "週末聚餐", "半夜想吃東西", "照鏡子很焦慮", "社群比較後低落", "久坐上班", "早上趕時間", "旅行或出差", "生理期前後", "重新開始的第一週"];
@@ -80,19 +81,20 @@ function defaultPlan(topic: Topic): SavedPlan {
 }
 
 function packCloudPlans(plans: Record<string, SavedPlan>, customTopics: Topic[]): CloudPlanEnvelope {
-  return { __workspaceVersion: 2, items: plans, customTopics };
+  return { __workspaceVersion: 3, items: plans, customTopics };
 }
 
 function unpackCloudPlans(value: unknown) {
   if (!value || typeof value !== "object") return { plans: {}, customTopics: [] as Topic[] };
   const candidate = value as Partial<CloudPlanEnvelope>;
-  if (candidate.__workspaceVersion === 2 && candidate.items && typeof candidate.items === "object") {
+  if (candidate.__workspaceVersion === 3 && candidate.items && typeof candidate.items === "object") {
     return {
       plans: candidate.items as Record<string, SavedPlan>,
       customTopics: Array.isArray(candidate.customTopics) ? candidate.customTopics : [],
     };
   }
-  return { plans: value as Record<string, SavedPlan>, customTopics: [] as Topic[] };
+  // Older workspaces refer to the retired topic library and must not revive old scripts.
+  return { plans: {}, customTopics: [] as Topic[] };
 }
 
 function downloadText(filename: string, text: string, type = "text/markdown;charset=utf-8") {

@@ -25,14 +25,6 @@ export type TopicGenerationOptions = {
   purpose: string;
 };
 
-const categoryLeads: Record<string, string> = {
-  減肥瘦身知識: "先別急著把它解讀成意志力不夠，生活節奏、壓力與方法能不能持續，都值得一起看。",
-  身心靈相關: "你不需要立刻變得正向，先誠實看見現在的感受，就已經是在照顧自己。",
-  愛美相關: "這不是要修正或遮住自己，而是多一個更舒服、也更適合今天的選擇。",
-  健康相關: "先把這當成日常觀察，不是診斷，也不需要勉強身體完成不適合的動作。",
-  飲食知識相關: "食物沒有只靠一個名稱就能判斷好壞，還要放回份量、搭配與個人情況。",
-};
-
 const categoryGuides: Record<string, { focus: string[]; risk: string; check: string }> = {
   減肥瘦身知識: {
     focus: ["失控時段", "重新開始", "體重焦慮", "補償衝動", "可持續節奏", "睡眠壓力", "外食選擇", "運動門檻", "自我責備", "進度判斷"],
@@ -106,11 +98,6 @@ function shortSubtitle(value: string, max = 22) {
   return compact.length > max ? `${compact.slice(0, max)}…` : compact;
 }
 
-function storyPart(topic: Topic, label: string) {
-  const match = topic.storyline?.match(new RegExp(`${label}：([^→]+)`));
-  return match?.[1]?.trim() || "先把注意力帶回當下，做一個今天做得到的小版本";
-}
-
 function timecodes(duration: string) {
   if (duration === "30 秒") return ["0–3 秒", "3–8 秒", "8–15 秒", "15–22 秒", "22–27 秒", "27–30 秒"];
   if (duration === "60–90 秒") return ["0–5 秒", "5–18 秒", "18–38 秒", "38–60 秒", "60–75 秒", "75–90 秒"];
@@ -119,43 +106,41 @@ function timecodes(duration: string) {
 
 export function buildScriptSegments(topic: Topic, plan: ScriptPlanInput): ScriptSegment[] {
   const times = timecodes(plan.duration);
-  const categoryLead = categoryLeads[topic.category] ?? "先把問題放回完整情境，再找一個今天做得到的下一步。";
-  const audience = plan.audience.trim() || "正在重新開始的人";
 
   return [
     {
       time: times[0],
-      voiceover: `${sentence(plan.opening || topic.hook)}${sentence(`故事目標：${storyPart(topic, "目標")}`)}`,
+      voiceover: sentence(plan.opening || topic.hook),
       visual: "正面近景直接開場；第一句說完前不切鏡，主標同步出現。",
       subtitle: shortSubtitle(plan.opening || topic.hook, 18),
     },
     {
       time: times[1],
-      voiceover: sentence(`如果你也是${audience}，遇到「${topic.title}」時，先不要急著把問題全部怪在自己身上。故事裡真正的阻礙是：${storyPart(topic, "阻礙")}`),
+      voiceover: `${sentence(topic.scene)}${sentence(topic.empathy)}`,
       visual: `切生活情境 B-roll：${topic.visual}；保留一個真實、不完美的停頓。`,
-      subtitle: "先別急著責怪自己",
+      subtitle: shortSubtitle(topic.empathy, 18),
     },
     {
       time: times[2],
-      voiceover: `${sentence(categoryLead)}${sentence(plan.keyMessage || topic.angle)}${sentence(`轉彎：${storyPart(topic, "轉彎")}`)}`,
+      voiceover: sentence(plan.keyMessage || topic.explain || topic.angle),
       visual: "回到半身口播；核心觀點用一張大字卡固定在畫面側邊。",
       subtitle: shortSubtitle(plan.keyMessage || topic.angle),
     },
     {
       time: times[3],
-      voiceover: sentence(`今天先做一個小版本：${storyPart(topic, "努力")}。接著看看會得到什麼結果：${storyPart(topic, "結果")}`),
+      voiceover: sentence(`今天你先這樣做：${topic.action}`),
       visual: `${plan.shots || topic.visual}；依順序切成 2–3 個可跟做的鏡頭。`,
-      subtitle: "今天只做一個小版本",
+      subtitle: shortSubtitle(topic.action, 18),
     },
     {
       time: times[4],
-      voiceover: sentence(`這不是要用一支影片解決所有狀況。故事的意外是：${storyPart(topic, "意外")}。發布前請記得：${topic.check}`),
+      voiceover: sentence(topic.reframe),
       visual: "正面近景，語速放慢；右下角顯示「依個人情況調整」與必要的專業提醒。",
-      subtitle: "先看個人情況與安全提醒",
+      subtitle: shortSubtitle(topic.reframe, 18),
     },
     {
       time: times[5],
-      voiceover: `${sentence(plan.cta || topic.cta)}${sentence(`結局：${storyPart(topic, "結局")}`)}`,
+      voiceover: sentence(plan.cta || topic.cta),
       visual: "定鏡 2 秒；CTA 單獨放大，不再加入第二個行動要求。",
       subtitle: shortSubtitle(plan.cta || topic.cta, 16),
     },
@@ -201,17 +186,22 @@ export function generateUniqueTopics(existingTopics: Topic[], options: TopicGene
       category: options.category,
       title,
       hook,
-      angle: `針對「${options.audience}」在「${options.situation}」的真實限制，從${focus}提供一個能完成、能調整的下一步。`,
-      structure: "0–5秒：情境鉤子｜5–15秒：承接真實卡點｜15–40秒：示範一個小步驟｜40–55秒：補上安全條件｜55–60秒：單一 CTA",
-      visual: `${options.situation}生活畫面＋${focus}三格提醒卡＋正面口播收尾`,
+      angle: `先看見「${options.situation}」裡的真實限制，再用${focus}找一個做得到的下一步。`,
+      structure: "情境鉤子 → 同理卡點 → 白話拆解 → 一個可做步驟 → 轉念 → 單一 CTA",
+      visual: `${options.situation}生活畫面；先拍真實片段，再用${focus}提醒卡收尾。`,
       cta: purposeCtas[options.purpose] ?? "收藏，下一次遇到同樣情境時再回來看",
       risk: guide.risk,
       check: guide.check,
       series: `續題・${options.formula}`,
       contentType: options.purpose === "導向免費工具" ? "賺錢型" : options.formula === "情緒故事" ? "心情型" : "信任型",
-      storyline: `目標：在「${options.situation}」時完成一個可持續的小改變 → 阻礙：${options.audience}常被情緒與生活節奏卡住 → 努力：先停下來播放一段靜心音樂，辨認當下的需要 → 結果：找到一個做得到的下一步 → 意外：原來不必完美也能開始 → 轉彎：把自責轉成可被照顧的選擇 → 結局：讓觀眾帶走明天能實作的行動`,
-      storyElements: `時間地點：${options.situation}；動作：停下來、呼吸並寫下一句感受；想法：「我現在真正需要的是什麼？」；情緒：疲累、焦慮或期待；對話：「我先不用解決全部。」；轉折：看見情緒背後的需要；行動：完成一個低門檻版本。`,
-      threeLayer: `心理學：理解${options.audience}的痛點；銷售學：讓觀眾感覺「我就是你」並看見方法的價值；故事學：從卡住轉向希望與下一步。`,
+      scene: `${options.situation}時，你發現自己又卡在「${focus}」。`,
+      empathy: `不是你做不好，很多${options.audience}都會因為壓力和生活節奏，在這個時刻不知道怎麼選。`,
+      explain: `真正要看的不是你夠不夠努力，而是${focus}有沒有一個能出現在真實生活裡的版本。`,
+      action: `先把${focus}縮小成一件今天做得到的小事，完成後再決定下一步。`,
+      reframe: `你不需要一次改完全部，先讓自己在這個情境裡少一點自責、多一點選擇。`,
+      storyline: `目標：在「${options.situation}」裡調整${focus} → 阻礙：${options.audience}容易被壓力與生活節奏卡住 → 努力：先把${focus}縮小成一件今天做得到的小事 → 結果：讓下一步更容易開始 → 意外：不必完美也能持續 → 轉彎：從自責改為看見需要 → 結局：${purposeCtas[options.purpose] ?? "把這個提醒留給下次的自己"}`,
+      storyElements: `時間地點：${options.situation}；動作：先停下來完成一個小步驟；想法：「我現在真正需要的是什麼？」；情緒：疲累、焦慮或期待；對話：「我先不用把全部做好。」；轉折：看見壓力背後的需要；行動：完成低門檻版本。`,
+      threeLayer: `心理學：理解${options.audience}的卡點；銷售學：提供可直接照做的版本；故事學：從卡住轉向下一步。`,
     });
     usedTitles.add(normalize(title));
     usedHooks.add(normalize(hook));

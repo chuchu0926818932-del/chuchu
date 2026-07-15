@@ -39,11 +39,17 @@ test("ships 80 topics, direct scripts, completion filtering and deduplicated con
     readFile(new URL("../package.json", import.meta.url), "utf8"),
   ]);
 
-  assert.equal((topicsSource.match(/"id": "T\d{3}"/g) ?? []).length, 80);
-  assert.equal((topicsSource.match(/"contentType":/g) ?? []).length, 80);
-  assert.equal((topicsSource.match(/靶心人公式：/g) ?? []).length, 80);
-  assert.equal((topicsSource.match(/時間地點：/g) ?? []).length, 80);
-  assert.equal((topicsSource.match(/三合一：|心理學：/g) ?? []).length >= 80, true);
+  assert.equal((topicsSource.match(/formula: "/g) ?? []).length, 80);
+  assert.equal((topicsSource.match(/title: "/g) ?? []).length, 80);
+  assert.equal((topicsSource.match(/hook: "/g) ?? []).length, 80);
+  assert.equal((topicsSource.match(/scene: "/g) ?? []).length, 80);
+  assert.equal((topicsSource.match(/empathy: "/g) ?? []).length, 80);
+  assert.equal((topicsSource.match(/explain: "/g) ?? []).length, 80);
+  assert.equal((topicsSource.match(/action: "/g) ?? []).length, 80);
+  assert.equal((topicsSource.match(/reframe: "/g) ?? []).length, 80);
+  assert.match(topicsSource, /typeByFormula/);
+  assert.match(topicsSource, /目標：讓觀眾/);
+  assert.match(topicsSource, /時間地點：\$\{seed\.scene\}/);
   assert.match(pageSource, /localStorage/);
   assert.match(pageSource, /buildScriptSegments/);
   assert.match(pageSource, /completeActivePlan/);
@@ -54,6 +60,11 @@ test("ships 80 topics, direct scripts, completion filtering and deduplicated con
   assert.match(scriptSource, /usedTitles/);
   assert.match(scriptSource, /usedHooks/);
   assert.match(scriptSource, /口播：/);
+  assert.match(scriptSource, /topic\.scene/);
+  assert.match(scriptSource, /topic\.empathy/);
+  assert.match(scriptSource, /topic\.action/);
+  assert.match(scriptSource, /topic\.reframe/);
+  assert.doesNotMatch(scriptSource, /故事目標：|故事裡真正的阻礙是：|故事的意外是：/);
   assert.match(pageSource, /exportWorkspace/);
   assert.match(pageSource, /importWorkspace/);
   assert.match(pageSource, /TOPIC_PAGE_SIZE/);
