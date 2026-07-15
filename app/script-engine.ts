@@ -125,7 +125,7 @@ export function buildScriptSegments(topic: Topic, plan: ScriptPlanInput): Script
   return [
     {
       time: times[0],
-      voiceover: sentence(plan.opening || topic.hook),
+      voiceover: `${sentence(plan.opening || topic.hook)}${sentence(`故事目標：${storyPart(topic, "目標")}`)}`,
       visual: "正面近景直接開場；第一句說完前不切鏡，主標同步出現。",
       subtitle: shortSubtitle(plan.opening || topic.hook, 18),
     },
@@ -137,7 +137,7 @@ export function buildScriptSegments(topic: Topic, plan: ScriptPlanInput): Script
     },
     {
       time: times[2],
-      voiceover: `${sentence(categoryLead)}${sentence(plan.keyMessage || topic.angle)}`,
+      voiceover: `${sentence(categoryLead)}${sentence(plan.keyMessage || topic.angle)}${sentence(`轉彎：${storyPart(topic, "轉彎")}`)}`,
       visual: "回到半身口播；核心觀點用一張大字卡固定在畫面側邊。",
       subtitle: shortSubtitle(plan.keyMessage || topic.angle),
     },
@@ -155,7 +155,7 @@ export function buildScriptSegments(topic: Topic, plan: ScriptPlanInput): Script
     },
     {
       time: times[5],
-      voiceover: sentence(plan.cta || topic.cta),
+      voiceover: `${sentence(plan.cta || topic.cta)}${sentence(`結局：${storyPart(topic, "結局")}`)}`,
       visual: "定鏡 2 秒；CTA 單獨放大，不再加入第二個行動要求。",
       subtitle: shortSubtitle(plan.cta || topic.cta, 16),
     },
