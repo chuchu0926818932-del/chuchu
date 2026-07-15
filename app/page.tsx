@@ -456,19 +456,10 @@ export default function Home() {
     flash("已依最新企劃重新整理完整腳本");
   }
 
-  async function completeActivePlan() {
+  function completeActivePlan() {
     // Open the tab first, while this click is still a trusted user gesture, so popup blockers do not interrupt the flow.
     const keepTab = window.open(KEEP_LABEL_URL, "_blank", "noopener,noreferrer");
     const scriptForKeep = formatKeepScript(activeTopic, activePlan, activeScript);
-    let copiedToClipboard = false;
-
-    try {
-      await navigator.clipboard.writeText(scriptForKeep);
-      copiedToClipboard = true;
-    } catch {
-      // The plan is still safely archived even if a browser has disabled clipboard access.
-    }
-
     setPlans((current) => {
       const plan = current[activeTopic.id] ?? defaultPlan(activeTopic);
       const now = new Date().toISOString();
@@ -487,13 +478,23 @@ export default function Home() {
     });
     setShowCompleted(false);
     setView("library");
-    if (copiedToClipboard && keepTab) {
-      flash("已歸檔，完整文案已複製；Keep 已在新分頁開啟，直接貼上即可");
-    } else if (copiedToClipboard) {
-      flash("已歸檔，完整文案已複製；請手動開啟 Keep 的 28 天影片標籤貼上");
-    } else {
-      flash("企劃已完成並歸檔；瀏覽器未允許複製，請在 Keep 中手動複製腳本");
-    }
+
+    // Never let an unavailable or slow clipboard permission block the completed archive.
+    // The user can still reach Keep and paste manually if the copy request is denied.
+    flash("企劃已完成並歸檔；正在複製文案並開啟 Keep");
+    void navigator.clipboard
+      .writeText(scriptForKeep)
+      .then(() => {
+        if (keepTab) {
+          flash("已歸檔，完整文案已複製；Keep 已在新分頁開啟，直接貼上即可");
+          return;
+        }
+
+        flash("已歸檔，完整文案已複製；請手動開啟 Keep 的 28 天影片標籤貼上");
+      })
+      .catch(() => {
+        flash("企劃已完成並歸檔；瀏覽器未允許複製，請在 Keep 中手動複製腳本");
+      });
   }
 
   function setPublishDateAfter(days: number) {
@@ -847,7 +848,7 @@ export default function Home() {
                 ) : <button className="button danger" type="button" onClick={() => setRemoveConfirming(true)}>移除企劃</button>)}
                 <button className="button ghost" onClick={downloadPlan}>下載腳本</button>
                 <button className="button secondary" onClick={() => copyText(formatShootingScript(activeTopic, activePlan, activeScript), "完整拍攝腳本已複製")}>複製完整腳本</button>
-                <button className="button primary large complete-button" onClick={() => void completeActivePlan()} disabled={activePlan.status === "已完成"}>{activePlan.status === "已完成" ? "已完成拍攝 ✓" : "拍攝完成並歸檔・複製到 Keep ✓"}</button>
+                <button className="button primary large complete-button" onClick={completeActivePlan} disabled={activePlan.status === "已完成"}>{activePlan.status === "已完成" ? "已完成拍攝 ✓" : "拍攝完成並歸檔・複製到 Keep ✓"}</button>
               </div>
             </div>
           </div>

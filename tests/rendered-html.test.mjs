@@ -57,6 +57,8 @@ test("ships 80 topics, direct scripts, completion filtering and deduplicated con
   assert.match(pageSource, /keep\.google\.com\/#label\/28%E5%A4%A9%E5%BD%B1%E7%89%87/);
   assert.match(pageSource, /window\.open\(KEEP_LABEL_URL/);
   assert.match(pageSource, /formatKeepScript/);
+  assert.match(pageSource, /void navigator\.clipboard/);
+  assert.ok(pageSource.indexOf('setView("library")') < pageSource.indexOf("void navigator.clipboard"));
   assert.match(pageSource, /generatorUnlocked/);
   assert.match(pageSource, /customTopics/);
   assert.match(pageSource, /拍攝完成並歸檔/);
