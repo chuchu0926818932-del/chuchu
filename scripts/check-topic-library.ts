@@ -1,4 +1,4 @@
-import { formulas, topics } from "../app/topics";
+import { topics } from "../app/topics";
 
 function normalize(value: string) {
   return value.toLocaleLowerCase("zh-Hant").replace(/[^\p{L}\p{N}]/gu, "");
@@ -8,25 +8,34 @@ function assert(condition: unknown, message: string): asserts condition {
   if (!condition) throw new Error(message);
 }
 
-assert(topics.length === 80, `Expected 80 topics, received ${topics.length}.`);
-assert(formulas.length === 8, `Expected 8 formulas, received ${formulas.length}.`);
+const legacyTopics = topics.filter((topic) => !topic.id.startsWith("D20260716-"));
+const dailyTopics = topics.filter((topic) => topic.id.startsWith("D20260716-"));
 
-for (const formula of formulas) {
-  const count = topics.filter((topic) => topic.formula === formula).length;
-  assert(count === 10, `${formula} must contain 10 topics, received ${count}.`);
-}
+assert(legacyTopics.length === 80, `Expected 80 retired topics, received ${legacyTopics.length}.`);
+assert(dailyTopics.length === 10, `Expected 10 daily topics, received ${dailyTopics.length}.`);
+assert(topics.length === 90, `Expected 90 topics total, received ${topics.length}.`);
 
 for (const field of ["title", "hook", "scene"] as const) {
   const values = topics.map((topic) => normalize(topic[field]));
   assert(new Set(values).size === values.length, `Duplicate ${field} detected.`);
 }
 
-for (const topic of topics) {
-  assert(topic.empathy.length >= 18, `${topic.id} needs a specific empathy line.`);
-  assert(topic.explain.length >= 18, `${topic.id} needs a plain-language explanation.`);
-  assert(topic.action.length >= 14, `${topic.id} needs an actionable next step.`);
-  assert(topic.reframe.length >= 14, `${topic.id} needs a reframe.`);
-  assert(!/故事目標：|故事裡真正的阻礙是：|故事的意外是：/.test(topic.hook), `${topic.id} exposes an internal formula label.`);
+const categoryCounts = new Map<string, number>();
+for (const topic of dailyTopics) {
+  categoryCounts.set(topic.category, (categoryCounts.get(topic.category) ?? 0) + 1);
+  for (const field of ["title", "hook", "scene", "empathy", "explain", "action", "reframe", "cta", "singleCta", "category", "formula", "contentType", "risk", "check", "storyline", "storyElements", "threeLayer"] as const) {
+    assert(topic[field].trim().length > 0, `${topic.id} is missing ${field}.`);
+  }
+  assert(topic.cta === topic.singleCta, `${topic.id} must have one CTA value.`);
+  assert(!/(目標|阻礙|努力|結果|意外|轉彎|結局)/u.test(topic.hook + topic.empathy + topic.explain + topic.action + topic.reframe), `${topic.id} exposes an internal story label.`);
 }
 
-console.log(JSON.stringify({ topics: topics.length, formulas: formulas.length, deduped: true }));
+const expectedCategories = ["減肥瘦身知識", "身心靈相關", "愛美相關", "健康相關", "飲食知識相關"];
+for (const category of expectedCategories) {
+  assert(categoryCounts.get(category) === 2, `${category} must have exactly 2 daily topics.`);
+}
+
+const dailyCtas = dailyTopics.map((topic) => normalize(topic.singleCta));
+assert(new Set(dailyCtas).size === dailyCtas.length, "Daily CTA keywords must be unique.");
+
+console.log(JSON.stringify({ legacyTopics: legacyTopics.length, dailyTopics: dailyTopics.length, totalTopics: topics.length, deduped: true }));

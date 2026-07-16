@@ -28,9 +28,10 @@ test("server-renders the SNL planning workspace", async () => {
   assert.doesNotMatch(html, /codex-preview|Your site is taking shape|react-loading-skeleton/i);
 });
 
-test("ships 80 topics, direct scripts, completion filtering and deduplicated continuation", async () => {
-  const [topicsSource, pageSource, scriptSource, cssSource, supabaseSource, migrationSource, packageJson] = await Promise.all([
+test("ships retired topics plus the daily batch, direct scripts, completion filtering and deduplicated continuation", async () => {
+  const [topicsSource, dailySource, pageSource, scriptSource, cssSource, supabaseSource, migrationSource, packageJson] = await Promise.all([
     readFile(new URL("../app/topics.ts", import.meta.url), "utf8"),
+    readFile(new URL("../app/daily-topics.ts", import.meta.url), "utf8"),
     readFile(new URL("../app/page.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/script-engine.ts", import.meta.url), "utf8"),
     readFile(new URL("../app/globals.css", import.meta.url), "utf8"),
@@ -47,6 +48,10 @@ test("ships 80 topics, direct scripts, completion filtering and deduplicated con
   assert.equal((topicsSource.match(/explain: "/g) ?? []).length, 80);
   assert.equal((topicsSource.match(/action: "/g) ?? []).length, 80);
   assert.equal((topicsSource.match(/reframe: "/g) ?? []).length, 80);
+  assert.equal((dailySource.match(/formula: "/g) ?? []).length, 10);
+  assert.equal((dailySource.match(/title: "/g) ?? []).length, 10);
+  assert.equal((dailySource.match(/singleCta: "/g) ?? []).length, 10);
+  assert.match(topicsSource, /dailyTopics/);
   assert.match(topicsSource, /typeByFormula/);
   assert.match(topicsSource, /目標：讓觀眾/);
   assert.match(topicsSource, /時間地點：\$\{seed\.scene\}/);

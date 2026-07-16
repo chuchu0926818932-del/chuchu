@@ -1,3 +1,5 @@
+import { dailyTopics } from "./daily-topics";
+
 export type Topic = {
   id: string;
   formula: string;
@@ -10,6 +12,7 @@ export type Topic = {
   structure: string;
   visual: string;
   cta: string;
+  singleCta: string;
   risk: string;
   check: string;
   series: string;
@@ -199,6 +202,7 @@ function makeTopic(seed: TopicSeed, index: number, formulaIndexes: Map<string, n
     structure: formulaStructure[seed.formula],
     visual: `${seed.scene}；先拍生活情境，再切到手部或表情近景，最後回到正面口播與單一 CTA。`,
     cta: seed.cta,
+    singleCta: seed.cta,
     risk: rule.risk,
     check: rule.check,
     series: `${seed.category}｜${seed.formula}｜Keep 風格重建版`,
@@ -215,7 +219,8 @@ function makeTopic(seed: TopicSeed, index: number, formulaIndexes: Map<string, n
 }
 
 const formulaIndexes = new Map<string, number>();
-export const topics: Topic[] = seeds.map((seed, index) => makeTopic(seed, index, formulaIndexes));
+const legacyTopics: Topic[] = seeds.map((seed, index) => makeTopic(seed, index, formulaIndexes));
+export const topics: Topic[] = [...legacyTopics, ...dailyTopics];
 
-export const formulas = formulaList;
+export const formulas = [...new Set(topics.map((topic) => topic.formula))];
 export const categories = [...new Set(topics.map((topic) => topic.category))];

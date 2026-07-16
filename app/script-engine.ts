@@ -199,6 +199,7 @@ export function generateUniqueTopics(existingTopics: Topic[], options: TopicGene
       structure: "情境鉤子 → 同理卡點 → 白話拆解 → 一個可做步驟 → 轉念 → 單一 CTA",
       visual: `${options.situation}生活畫面；先拍真實片段，再用${focus}提醒卡收尾。`,
       cta: purposeCtas[options.purpose] ?? "收藏，下一次遇到同樣情境時再回來看",
+      singleCta: purposeCtas[options.purpose] ?? "收藏，下一次遇到同樣情境時再回來看",
       risk: guide.risk,
       check: guide.check,
       series: `續題・${options.formula}`,
