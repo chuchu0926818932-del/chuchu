@@ -1,4 +1,5 @@
 import { dailyTopics } from "./daily-topics";
+import { foundationalTopics } from "./foundational-topics";
 
 export type Topic = {
   id: string;
@@ -220,7 +221,7 @@ function makeTopic(seed: TopicSeed, index: number, formulaIndexes: Map<string, n
 
 const formulaIndexes = new Map<string, number>();
 const legacyTopics: Topic[] = seeds.map((seed, index) => makeTopic(seed, index, formulaIndexes));
-export const topics: Topic[] = [...legacyTopics, ...dailyTopics];
+export const topics: Topic[] = [...legacyTopics, ...dailyTopics, ...foundationalTopics];
 
 export const formulas = [...new Set(topics.map((topic) => topic.formula))];
 export const categories = [...new Set(topics.map((topic) => topic.category))];
