@@ -28,10 +28,11 @@ test("server-renders the SNL planning workspace", async () => {
   assert.doesNotMatch(html, /codex-preview|Your site is taking shape|react-loading-skeleton/i);
 });
 
-test("ships retired topics plus the daily batch, direct scripts, completion filtering and deduplicated continuation", async () => {
-  const [topicsSource, dailySource, pageSource, scriptSource, cssSource, supabaseSource, migrationSource, packageJson] = await Promise.all([
+test("ships categorized topic libraries, direct scripts, completion filtering and deduplicated continuation", async () => {
+  const [topicsSource, dailySource, foundationalSource, pageSource, scriptSource, cssSource, supabaseSource, migrationSource, packageJson] = await Promise.all([
     readFile(new URL("../app/topics.ts", import.meta.url), "utf8"),
     readFile(new URL("../app/daily-topics.ts", import.meta.url), "utf8"),
+    readFile(new URL("../app/foundational-topics.ts", import.meta.url), "utf8"),
     readFile(new URL("../app/page.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/script-engine.ts", import.meta.url), "utf8"),
     readFile(new URL("../app/globals.css", import.meta.url), "utf8"),
@@ -52,9 +53,16 @@ test("ships retired topics plus the daily batch, direct scripts, completion filt
   assert.equal((dailySource.match(/title: "/g) ?? []).length, 10);
   assert.equal((dailySource.match(/singleCta: "/g) ?? []).length, 10);
   assert.match(topicsSource, /dailyTopics/);
+  assert.match(topicsSource, /foundationalTopics/);
+  assert.match(topicsSource, /export const firstBatchTopics/);
   assert.match(topicsSource, /typeByFormula/);
   assert.match(topicsSource, /目標：讓觀眾/);
   assert.match(topicsSource, /時間地點：\$\{seed\.scene\}/);
+  assert.match(foundationalSource, /const narratives: Record<string, Narrative>/);
+  assert.doesNotMatch(foundationalSource, /empathyFrames|explainFrames|reframeFrames/);
+  assert.match(foundationalSource, /女性成長/);
+  assert.match(foundationalSource, /金錢價值觀/);
+  assert.match(foundationalSource, /親子關係/);
   assert.match(pageSource, /localStorage/);
   assert.match(pageSource, /buildScriptSegments/);
   assert.match(pageSource, /completeActivePlan/);
@@ -63,8 +71,12 @@ test("ships retired topics plus the daily batch, direct scripts, completion filt
   assert.match(pageSource, /window\.open\(KEEP_LABEL_URL/);
   assert.match(pageSource, /formatKeepScript/);
   assert.match(pageSource, /void navigator\.clipboard/);
-  assert.ok(pageSource.indexOf('setView("library")') < pageSource.indexOf("void navigator.clipboard"));
+  const completePlanSource = pageSource.slice(pageSource.indexOf("function completeActivePlan()"), pageSource.indexOf("function setPublishDateAfter"));
+  assert.ok(completePlanSource.indexOf('setView("library")') < completePlanSource.indexOf("void navigator.clipboard"));
   assert.match(pageSource, /generatorUnlocked/);
+  assert.match(pageSource, /題庫範圍/);
+  assert.match(pageSource, /firstBatchTopics/);
+  assert.match(pageSource, /新分類/);
   assert.match(pageSource, /customTopics/);
   assert.match(pageSource, /拍攝完成並歸檔/);
   assert.match(scriptSource, /generateUniqueTopics/);
@@ -89,6 +101,9 @@ test("ships retired topics plus the daily batch, direct scripts, completion filt
   assert.match(cssSource, /@media \(max-width: 720px\)[\s\S]*\.topbar \{[^}]*flex-direction: column/);
   assert.match(cssSource, /@media \(max-width: 720px\)[\s\S]*\.view-tabs \{[^}]*grid-template-columns: repeat\(4/);
   assert.match(cssSource, /@media \(max-width: 720px\)[\s\S]*\.script-segment \{[^}]*grid-template-columns: 1fr/);
+  assert.match(cssSource, /category-badge\.peach/);
+  assert.match(cssSource, /category-badge\.gold/);
+  assert.match(cssSource, /category-badge\.indigo/);
   assert.match(cssSource, /\.topbar-actions \.button[^}]*min-height: 44px/);
   assert.match(pageSource, /signInWithOtp/);
   assert.match(pageSource, /snl_workspaces/);

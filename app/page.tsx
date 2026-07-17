@@ -4,10 +4,20 @@ import type { Session } from "@supabase/supabase-js";
 import { ChangeEvent, FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import { buildScriptSegments, formatKeepScript, formatShootingScript, generateUniqueTopics, type ScriptSegment } from "./script-engine";
 import { supabase, supabaseConfigured } from "./supabase";
-import { categories, formulas, Topic, topics } from "./topics";
+import {
+  categories,
+  firstBatchTopicIds,
+  firstBatchTopics,
+  formulas,
+  newTopicCategories,
+  sharedTopicIds,
+  Topic,
+  topics,
+} from "./topics";
 
 type View = "library" | "planner" | "generator" | "board";
 type PlanStatus = "待規劃" | "撰稿中" | "待拍攝" | "後製中" | "已完成";
+type LibraryScope = "全部題庫" | "原始首批 80 條" | "每日新增" | "女性・金錢・親子" | "去重續題";
 
 type SavedPlan = {
   topicId: string;
@@ -57,7 +67,20 @@ const categoryColors: Record<string, string> = {
   愛美相關: "rose",
   健康相關: "sky",
   飲食知識相關: "amber",
+  女性成長: "peach",
+  金錢價值觀: "gold",
+  親子關係: "indigo",
 };
+
+const newCategorySet = new Set<string>(newTopicCategories);
+
+function matchesLibraryScope(topic: Topic, scope: LibraryScope) {
+  if (scope === "全部題庫") return true;
+  if (scope === "原始首批 80 條") return firstBatchTopicIds.has(topic.id);
+  if (scope === "每日新增") return topic.id.startsWith("D20260716-");
+  if (scope === "女性・金錢・親子") return newCategorySet.has(topic.category);
+  return !sharedTopicIds.has(topic.id);
+}
 
 function defaultPlan(topic: Topic): SavedPlan {
   const plan: SavedPlan = {
@@ -115,6 +138,7 @@ export default function Home() {
   const [query, setQuery] = useState("");
   const [formulaFilter, setFormulaFilter] = useState("全部公式");
   const [categoryFilter, setCategoryFilter] = useState("全部主題");
+  const [libraryScope, setLibraryScope] = useState<LibraryScope>("全部題庫");
   const [riskFilter, setRiskFilter] = useState("全部風險");
   const [onlyFavorites, setOnlyFavorites] = useState(false);
   const [showCompleted, setShowCompleted] = useState(false);
@@ -311,29 +335,31 @@ export default function Home() {
       return matchesQuery
         && (formulaFilter === "全部公式" || topic.formula === formulaFilter)
         && (categoryFilter === "全部主題" || topic.category === categoryFilter)
+        && matchesLibraryScope(topic, libraryScope)
         && (riskFilter === "全部風險" || topic.risk === riskFilter)
         && (!onlyFavorites || favorites.includes(topic.id))
         && (showCompleted || plans[topic.id]?.status !== "已完成");
     });
-  }, [allTopics, query, formulaFilter, categoryFilter, riskFilter, onlyFavorites, favorites, plans, showCompleted]);
+  }, [allTopics, query, formulaFilter, categoryFilter, libraryScope, riskFilter, onlyFavorites, favorites, plans, showCompleted]);
 
   const visibleTopics = filteredTopics.slice(0, visibleTopicCount);
 
   const plannedTopics = useMemo(() => Object.values(plans)
     .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt)), [plans]);
   const completedPlans = plannedTopics.filter((plan) => plan.status === "已完成");
-  const completedBaseCount = topics.filter((topic) => plans[topic.id]?.status === "已完成").length;
-  const remainingBaseCount = topics.length - completedBaseCount;
-  const generatorUnlocked = completedBaseCount === topics.length;
+  const completedBaseCount = firstBatchTopics.filter((topic) => plans[topic.id]?.status === "已完成").length;
+  const remainingBaseCount = firstBatchTopics.length - completedBaseCount;
+  const generatorUnlocked = completedBaseCount === firstBatchTopics.length;
   const inProgressCount = plannedTopics.filter((plan) => plan.status !== "已完成").length;
 
   function flash(message: string) {
     setToast(message);
   }
 
-  async function copyText(text: string, message: string) {
-    await navigator.clipboard.writeText(text);
-    flash(message);
+  function copyText(text: string, message: string) {
+    void navigator.clipboard.writeText(text)
+      .then(() => flash(message))
+      .catch(() => flash("瀏覽器未允許複製，請選取完整腳本後手動複製"));
   }
 
   async function sendMagicLink(event: FormEvent<HTMLFormElement>) {
@@ -524,6 +550,7 @@ export default function Home() {
     setQuery("");
     setFormulaFilter("全部公式");
     setCategoryFilter("全部主題");
+    setLibraryScope("全部題庫");
     setRiskFilter("全部風險");
     setOnlyFavorites(false);
     setShowCompleted(false);
@@ -651,10 +678,10 @@ export default function Home() {
 
       <section className={`workflow-progress ${generatorUnlocked ? "unlocked" : ""}`} aria-label="首批題庫完成進度">
         <div className="progress-copy">
-          <span>{generatorUnlocked ? "首批 80 條已完成" : `首批題庫進度 ${completedBaseCount} / ${topics.length}`}</span>
-          <strong>{generatorUnlocked ? "去重新題目已解鎖，可以繼續生產下一批文案。" : `先拍完現有題庫，還有 ${remainingBaseCount} 條；完成的題目會自動從待選區消失。`}</strong>
+          <span>{generatorUnlocked ? "原始首批 80 條已完成" : `原始首批題庫進度 ${completedBaseCount} / ${firstBatchTopics.length}`}</span>
+          <strong>{generatorUnlocked ? "去重新題目已解鎖，可以繼續生產下一批文案。" : `先拍完原始首批 80 條，還有 ${remainingBaseCount} 條；女性成長、金錢價值觀、親子關係已可直接選拍，不影響續題解鎖。`}</strong>
         </div>
-        <div className="progress-track" aria-hidden="true"><span style={{ width: `${(completedBaseCount / topics.length) * 100}%` }} /></div>
+        <div className="progress-track" aria-hidden="true"><span style={{ width: `${(completedBaseCount / firstBatchTopics.length) * 100}%` }} /></div>
         <button className="button secondary small" onClick={() => setView("generator")}>{generatorUnlocked ? "產生下一批 10 條" : "查看續題解鎖進度"}</button>
       </section>
 
@@ -702,6 +729,16 @@ export default function Home() {
               </select>
             </label>
             <label>
+              <span>題庫範圍</span>
+              <select value={libraryScope} onChange={(event) => { setLibraryScope(event.target.value as LibraryScope); setVisibleTopicCount(TOPIC_PAGE_SIZE); }}>
+                <option>全部題庫</option>
+                <option>原始首批 80 條</option>
+                <option>每日新增</option>
+                <option>女性・金錢・親子</option>
+                <option>去重續題</option>
+              </select>
+            </label>
+            <label>
               <span>風險</span>
               <select value={riskFilter} onChange={(event) => { setRiskFilter(event.target.value); setVisibleTopicCount(TOPIC_PAGE_SIZE); }}>
                 <option>全部風險</option>
@@ -722,6 +759,7 @@ export default function Home() {
                 <div className="card-topline">
                   <div className="badge-row">
                     <span className={`category-badge ${categoryColors[topic.category]}`}>{topic.category}</span>
+                    {newCategorySet.has(topic.category) && <span className="library-badge">新分類</span>}
                     <span className={`risk-badge risk-${topic.risk}`}>風險 {topic.risk}</span>
                     {plans[topic.id]?.status === "已完成" && <span className="completed-badge">已完成</span>}
                   </div>
@@ -762,8 +800,8 @@ export default function Home() {
           {filteredTopics.length === 0 && (
             <div className="empty-state">
               <div>⌕</div>
-              <h3>{completedBaseCount === topics.length && !showCompleted ? "首批待選題目已全部完成" : "目前沒有符合的題目"}</h3>
-              <p>{completedBaseCount === topics.length && !showCompleted ? "可以前往去重續題，產生下一批 10 條文案。" : "換一個關鍵字，或清除部分篩選條件。"}</p>
+              <h3>{completedBaseCount === firstBatchTopics.length && !showCompleted ? "原始首批待選題目已全部完成" : "目前沒有符合的題目"}</h3>
+              <p>{completedBaseCount === firstBatchTopics.length && !showCompleted ? "可以前往去重續題，產生下一批 10 條文案。" : "換一個關鍵字，或清除部分篩選條件。"}</p>
               <button className="button primary" onClick={clearLibraryFilters}>清除篩選</button>
             </div>
           )}
@@ -876,7 +914,7 @@ export default function Home() {
               <div className="step-number coral">02</div>
               <div className="prompt-heading">
                 <div><h3>{generatorUnlocked ? "去重續題已解鎖" : `還差 ${remainingBaseCount} 條完成`}</h3><p>{generatorUnlocked ? "選好方向後，網站會直接把下一批加入待選題庫。" : "先把目前的 80 條拍攝完成並歸檔，才會開放下一批，避免題庫越堆越多。"}</p></div>
-                <span>{generatorUnlocked ? "可以直接產生" : `進度 ${completedBaseCount} / ${topics.length}`}</span>
+                <span>{generatorUnlocked ? "可以直接產生" : `進度 ${completedBaseCount} / ${firstBatchTopics.length}`}</span>
               </div>
               <div className="generator-summary">
                 <p><span>公式</span><strong>{generatorFormula}</strong></p>

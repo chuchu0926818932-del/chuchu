@@ -1,4 +1,5 @@
 import { dailyTopics } from "./daily-topics";
+import { dailyTopics20260717 } from "./daily-topics-2026-07-17";
 import { foundationalTopics } from "./foundational-topics";
 
 export type Topic = {
@@ -221,7 +222,13 @@ function makeTopic(seed: TopicSeed, index: number, formulaIndexes: Map<string, n
 
 const formulaIndexes = new Map<string, number>();
 const legacyTopics: Topic[] = seeds.map((seed, index) => makeTopic(seed, index, formulaIndexes));
-export const topics: Topic[] = [...legacyTopics, ...dailyTopics, ...foundationalTopics];
+// The original 80 are the agreed filming milestone.  Later topic batches stay
+// available in the library, but do not move the continuation unlock goal.
+export const firstBatchTopics: Topic[] = legacyTopics;
+export const newTopicCategories = ["女性成長", "金錢價值觀", "親子關係"] as const;
+export const topics: Topic[] = [...firstBatchTopics, ...dailyTopics, ...dailyTopics20260717, ...foundationalTopics];
+export const firstBatchTopicIds = new Set(firstBatchTopics.map((topic) => topic.id));
+export const sharedTopicIds = new Set(topics.map((topic) => topic.id));
 
 export const formulas = [...new Set(topics.map((topic) => topic.formula))];
 export const categories = [...new Set(topics.map((topic) => topic.category))];
