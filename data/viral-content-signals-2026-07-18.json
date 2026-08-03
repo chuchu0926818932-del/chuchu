@@ -1,0 +1,290 @@
+[
+  {
+    "id": "V20260718-001",
+    "capturedAt": "2026-07-18T01:12:00+08:00",
+    "category": "平台信號",
+    "targetCategories": ["女性成長", "金錢價值觀", "親子關係"],
+    "formatSignal": "真實過程與幕後片段優於過度完美包裝",
+    "safeAdaptation": "以第一人稱拍一個正在處理的日常卡點，再用一個小選擇收尾。",
+    "riskGuard": "只取內容形式，不重拍來源創作者的鏡頭、台詞或故事。",
+    "dedupeKey": "unfiltered-process-bts",
+    "source": {
+      "publisher": "TikTok for Business",
+      "title": "TikTok Next 2026 Trend Report: Top Trends & Forecast",
+      "publishedAt": "unknown",
+      "url": "https://ads.tiktok.com/business/en-GB/next"
+    }
+  },
+  {
+    "id": "V20260718-002",
+    "capturedAt": "2026-07-18T01:12:00+08:00",
+    "category": "平台信號",
+    "targetCategories": ["女性成長", "金錢價值觀", "親子關係"],
+    "formatSignal": "以資料觀察趨勢生命週期，而非追單支影片",
+    "safeAdaptation": "每個題材記錄主題、格式、受眾情境與收錄日，再以角度鍵去重。",
+    "riskGuard": "不將單一熱門標籤或影片表現當成普遍成效保證。",
+    "dedupeKey": "trend-lifecycle-not-single-post",
+    "source": {
+      "publisher": "TikTok Business Help Center",
+      "title": "How to use Trends",
+      "publishedAt": "unknown",
+      "url": "https://ads.tiktok.com/help/article/how-to-use-trends"
+    }
+  },
+  {
+    "id": "V20260718-003",
+    "capturedAt": "2026-07-18T01:12:00+08:00",
+    "category": "女性成長",
+    "targetCategories": ["女性成長"],
+    "formatSignal": "WorkTok 的工作日真相與職場規範討論",
+    "safeAdaptation": "用『我原本以為要立刻配合，後來先確認優先順序』呈現職場界線或協作。",
+    "riskGuard": "不點名公司、不揭露工作機密，也不鼓勵與主管或同事對立。",
+    "dedupeKey": "worktok-workday-reality-boundary",
+    "source": {
+      "publisher": "RTÉ Brainstorm",
+      "title": "How young workers are redefining the meaning of work with WorkTok",
+      "publishedAt": "2026-03-23",
+      "url": "https://www.rte.ie/brainstorm/2026/0323/1564671-worktok-videos-work-lives-videos-lazy-girl-job-loud-labouring-act-your-wage-social-media/"
+    }
+  },
+  {
+    "id": "V20260718-004",
+    "capturedAt": "2026-07-18T01:12:00+08:00",
+    "category": "女性成長",
+    "targetCategories": ["女性成長"],
+    "formatSignal": "女性在 AI 轉型、學習與工作選擇中的真實顧慮",
+    "safeAdaptation": "把『我怕跟不上』拆成一個本週可試的工作技能或成果整理動作。",
+    "riskGuard": "不把 AI 焦慮包裝成恐慌，也不保證轉職、升遷或收入結果。",
+    "dedupeKey": "women-work-ai-small-skill-step",
+    "source": {
+      "publisher": "女人迷 Womany",
+      "title": "2026 台灣女性職場深度洞見報告",
+      "publishedAt": "unknown",
+      "url": "https://womany.net/empowerment/insight"
+    }
+  },
+  {
+    "id": "V20260718-005",
+    "capturedAt": "2026-07-18T01:12:00+08:00",
+    "category": "女性成長",
+    "targetCategories": ["女性成長"],
+    "formatSignal": "女性創作者以職涯轉彎、創業與打破常規建立共鳴",
+    "safeAdaptation": "拍『還在摸索的工作轉換』，只說眼前的比較與準備，不說成功神話。",
+    "riskGuard": "不引用個別創作者故事或暗示創業必然成功。",
+    "dedupeKey": "women-creator-career-turning-point",
+    "source": {
+      "publisher": "TikTok Newsroom Taiwan",
+      "title": "慶祝國際婦女節 #WomenOfTikTok 盤點顛「婦」台灣的 8 位傑出女性創作者",
+      "publishedAt": "2025-03-08",
+      "url": "https://newsroom.tiktok.com/international-womens-day-2025?lang=zh-Hant-TW"
+    }
+  },
+  {
+    "id": "V20260718-006",
+    "capturedAt": "2026-07-18T01:12:00+08:00",
+    "category": "金錢價值觀",
+    "targetCategories": ["金錢價值觀"],
+    "formatSignal": "把看似專業的金錢資訊還原成可核對的日常判斷",
+    "safeAdaptation": "用『看到這類資訊先核對哪一件事』取代任何買賣、借貸或商品推薦。",
+    "riskGuard": "不提供投資、貸款、金融商品或報酬承諾。",
+    "dedupeKey": "money-information-verification-before-action",
+    "source": {
+      "publisher": "FINRA Foundation",
+      "title": "Research Examines the Characteristics, Behaviors and Outcomes of Retail Investors Who Use Social Media",
+      "publishedAt": "unknown",
+      "url": "https://www.finra.org/media-center/newsreleases/2026/finra-foundation-research-examines-characteristics-behaviors-outcomes"
+    }
+  },
+  {
+    "id": "V20260718-007",
+    "capturedAt": "2026-07-18T01:12:00+08:00",
+    "category": "金錢價值觀",
+    "targetCategories": ["金錢價值觀"],
+    "formatSignal": "金錢短影音需要清楚的限制與揭露，而非強勢結論",
+    "safeAdaptation": "以『我怎麼整理資訊／預算／對話』為主，保留不適合每個人的條件。",
+    "riskGuard": "不模仿 finfluencer 的高報酬、明牌或急迫式鉤子。",
+    "dedupeKey": "money-disclosure-and-limitations",
+    "source": {
+      "publisher": "arXiv",
+      "title": "Finfluencers on TikTok: A Longitudinal Analysis of Content, Engagement, and Disclaimer Practices",
+      "publishedAt": "2026-07-06",
+      "url": "https://arxiv.org/abs/2607.05203"
+    }
+  },
+  {
+    "id": "V20260718-008",
+    "capturedAt": "2026-07-18T01:12:00+08:00",
+    "category": "金錢價值觀",
+    "targetCategories": ["金錢價值觀", "女性成長"],
+    "formatSignal": "把金錢焦慮連到職涯價值與日常對話，而非炫耀數字",
+    "safeAdaptation": "從『我為什麼不敢談待遇／談分帳』切入，再給一個能確認事實的小問題。",
+    "riskGuard": "不替觀眾訂收入標準，不推薦信用或金融產品。",
+    "dedupeKey": "money-anxiety-to-conversation",
+    "source": {
+      "publisher": "Associated Press",
+      "title": "Your Rich BFF Vivian Tu shares her favorite personal finance tips",
+      "publishedAt": "2026-02-20",
+      "url": "https://apnews.com/article/7478710a26a55b18cbfa5936bdd1dd9a"
+    }
+  },
+  {
+    "id": "V20260718-009",
+    "capturedAt": "2026-07-18T01:12:00+08:00",
+    "category": "親子關係",
+    "targetCategories": ["親子關係"],
+    "formatSignal": "父母關注更慢、更在場與有界線的親子日常",
+    "safeAdaptation": "以家長第一人稱拍『把規則說得更清楚』，用兩個可選擇的日常做法收尾。",
+    "riskGuard": "不拍攝或揭露孩子隱私，不承諾孩子會立刻改變。",
+    "dedupeKey": "parenting-present-boundaries",
+    "source": {
+      "publisher": "Pinterest Newsroom",
+      "title": "Parenting Trend Report 2026: Raising screen-smart kids who seek real-world adventure",
+      "publishedAt": "unknown",
+      "url": "https://newsroom.pinterest.com/en-au/news/parenting-trend-report-2026/"
+    }
+  },
+  {
+    "id": "V20260718-010",
+    "capturedAt": "2026-07-18T01:12:00+08:00",
+    "category": "親子關係",
+    "targetCategories": ["親子關係", "女性成長"],
+    "formatSignal": "育兒壓力、時間彈性與職場支持是可共感的真實題材",
+    "safeAdaptation": "從『今天最卡的一個交接』講起，呈現家庭內如何重排一件事。",
+    "riskGuard": "不把主要照顧者貼標籤，也不把育兒困難歸咎於任何家庭成員。",
+    "dedupeKey": "parenting-time-flexibility-workplace",
+    "source": {
+      "publisher": "公視新聞網 PNN",
+      "title": "為孩子失去生活彈性？全台媽媽僅2成肯定養兒容易",
+      "publishedAt": "unknown",
+      "url": "https://news.pts.org.tw/article/806801"
+    }
+  },
+  {
+    "id": "V20260718-011",
+    "capturedAt": "2026-07-18T01:12:00+08:00",
+    "category": "親子關係",
+    "targetCategories": ["親子關係"],
+    "formatSignal": "親子生活內容容易因日常細節產生代入感，但不必用孩子當內容主角",
+    "safeAdaptation": "拍家長的手、行事曆或家中流程，讓孩子只以非辨識性的生活脈絡存在。",
+    "riskGuard": "不公開孩子姓名、臉部、學校、行程或脆弱時刻。",
+    "dedupeKey": "parenting-adult-pov-privacy",
+    "source": {
+      "publisher": "台北市廣告代理商業同業公會",
+      "title": "少子化下逆勢成長：從 TOP50 榜單解析親子生活 KOL 的影響力與商業價值",
+      "publishedAt": "2026-05-11",
+      "url": "https://www.taaa.org.tw/news/article/9674"
+    }
+  },
+  {
+    "id": "V20260718-012",
+    "capturedAt": "2026-07-18T01:12:00+08:00",
+    "category": "親子關係",
+    "targetCategories": ["親子關係"],
+    "formatSignal": "社群與短影音使用本身也是親子對話的現實入口",
+    "safeAdaptation": "從『要收手機時先談哪一件事』切入，提供可共同約定的低門檻選擇。",
+    "riskGuard": "不診斷成癮、不羞辱孩子，也不以恐懼驅動互動。",
+    "dedupeKey": "parenting-screen-time-conversation",
+    "source": {
+      "publisher": "Pew Research Center",
+      "title": "What parents say about their teen’s uses of social media",
+      "publishedAt": "2026-04-15",
+      "url": "https://www.pewresearch.org/internet/2026/04/15/what-parents-say-about-their-teens-uses-of-social-media/"
+    }
+  },
+  {
+    "id": "V20260718-013",
+    "capturedAt": "2026-07-18T01:12:00+08:00",
+    "category": "平台信號",
+    "targetCategories": ["女性成長", "金錢價值觀", "親子關係"],
+    "formatSignal": "Reels 以人物、發現與短影音互動作為日常入口",
+    "safeAdaptation": "每支片第一秒先放生活情境文字，讓觀眾先辨識自己，再聽拆解。",
+    "riskGuard": "不把區域性使用數據套用為台灣成效承諾。",
+    "dedupeKey": "reels-discovery-relatable-first-second",
+    "source": {
+      "publisher": "Meta Newsroom",
+      "title": "Reels Is Shaping India's Video-First Future Across Gen Z, Women & Bharat",
+      "publishedAt": "2026-06-03",
+      "url": "https://about.fb.com/news/2026/06/reels-is-shaping-indias-video-first-future-across-gen-z-women-bharat/"
+    }
+  },
+  {
+    "id": "V20260718-014",
+    "capturedAt": "2026-07-18T01:12:00+08:00",
+    "category": "平台信號",
+    "targetCategories": ["女性成長", "金錢價值觀", "親子關係"],
+    "formatSignal": "Shorts 體驗正朝向更強的互動與發現設計演進",
+    "safeAdaptation": "將同一個去重後的核心觀點改成可獨立看懂的短片，不依賴平台內梗。",
+    "riskGuard": "不承諾演算法推薦或觸及，並保留各平台原生剪輯調整。",
+    "dedupeKey": "shorts-standalone-discovery",
+    "source": {
+      "publisher": "YouTube Blog",
+      "title": "How we're updating the YouTube Shorts experience",
+      "publishedAt": "2026-06-25",
+      "url": "https://blog.youtube/news-and-events/youtube-shorts-experience-updates-features/"
+    }
+  },
+  {
+    "id": "V20260718-015",
+    "capturedAt": "2026-07-18T01:26:00+08:00",
+    "category": "女性成長",
+    "targetCategories": ["女性成長"],
+    "formatSignal": "近期 WorkTok 把職場不滿與求職動機變成可討論的生活片段",
+    "safeAdaptation": "用『我不急著離開，先把正在消耗我的一件事寫下來』切入職涯判斷。",
+    "riskGuard": "不鼓勵衝動離職，不拍攝離職、裁員或公司內部情境。",
+    "dedupeKey": "worktok-job-search-motivator-not-quittok",
+    "source": {
+      "publisher": "HRO Today",
+      "title": "Getting the Most Out of #WorkTok",
+      "publishedAt": "2026-07-16",
+      "url": "https://www.hrotoday.com/news/employee-engagement/talent-retention/getting-the-most-out-of-worktok/"
+    }
+  },
+  {
+    "id": "V20260718-016",
+    "capturedAt": "2026-07-18T01:26:00+08:00",
+    "category": "金錢價值觀",
+    "targetCategories": ["金錢價值觀"],
+    "formatSignal": "熱門消費話題適合轉譯成價值排序與延後決定，而不是跟風採買",
+    "safeAdaptation": "把『這筆錢值不值得』拆成需求、使用情境與等一晚三個問題。",
+    "riskGuard": "不提供投資、借貸或任何金融商品建議，也不把節省當成道德優越。",
+    "dedupeKey": "money-trend-value-first-delay-choice",
+    "source": {
+      "publisher": "Associated Press",
+      "title": "How to navigate social media trends without derailing your budget",
+      "publishedAt": "unknown",
+      "url": "https://apnews.com/article/79c96febd5935dc14d8e3642eef0d1c5"
+    }
+  },
+  {
+    "id": "V20260718-017",
+    "capturedAt": "2026-07-18T01:26:00+08:00",
+    "category": "平台信號",
+    "targetCategories": ["女性成長", "金錢價值觀", "親子關係"],
+    "formatSignal": "可把趨勢當作創作起點，但以個人觀點與情境重組才有辨識度",
+    "safeAdaptation": "每個題材先寫自己的日常畫面與限制，再選一種既有版型，不複製熱門音訊或腳本。",
+    "riskGuard": "不挪用創作者素材、角色或逐字鉤子，並保留來源紀錄。",
+    "dedupeKey": "trend-remix-own-context-not-copy",
+    "source": {
+      "publisher": "YouTube Blog",
+      "title": "Cracking the code to YouTube Shorts",
+      "publishedAt": "2026-01-15",
+      "url": "https://blog.youtube/creator-and-artist-stories/cracking-the-code-to-youtube-shorts/"
+    }
+  },
+  {
+    "id": "V20260718-018",
+    "capturedAt": "2026-07-18T01:26:00+08:00",
+    "category": "平台信號",
+    "targetCategories": ["女性成長", "金錢價值觀", "親子關係"],
+    "formatSignal": "近期 Reels 可見『人物觀點＋多重鉤子』與工作過程內容持續被整理為可用格式",
+    "safeAdaptation": "在同一支片中只保留一個生活衝突，首句、畫面文字與轉念都服務同一個問題。",
+    "riskGuard": "不以任何格式保證觸及，並避免堆疊多個不相關的鉤子。",
+    "dedupeKey": "reels-one-conflict-multi-entry",
+    "source": {
+      "publisher": "Later",
+      "title": "Top Instagram Reels Trends to Try in 2026",
+      "publishedAt": "unknown",
+      "url": "https://later.com/blog/instagram-reels-trends/"
+    }
+  }
+]
