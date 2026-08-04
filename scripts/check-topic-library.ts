@@ -12,16 +12,18 @@ const legacyTopics = firstBatchTopics;
 const priorDailyTopics = topics.filter((topic) => topic.id.startsWith("D20260716-"));
 const priorThirtyTopicDailyBatch = topics.filter((topic) => topic.id.startsWith("D20260717-"));
 const priorDailyThirtyTopicBatch = topics.filter((topic) => topic.id.startsWith("D20260725-"));
-const dailyTopics = topics.filter((topic) => topic.id.startsWith("D20260803-"));
+const priorNewestDailyTopics = topics.filter((topic) => topic.id.startsWith("D20260803-"));
+const dailyTopics = topics.filter((topic) => topic.id.startsWith("D20260804-"));
 const foundationalTopics = topics.filter((topic) => topic.id.startsWith("F20260716-"));
 
 assert(legacyTopics.length === 80, `Expected 80 first-batch topics, received ${legacyTopics.length}.`);
 assert(priorDailyTopics.length === 10, `Expected the prior 10-topic daily batch, received ${priorDailyTopics.length}.`);
 assert(priorThirtyTopicDailyBatch.length === 30, `Expected the prior 30-topic daily batch, received ${priorThirtyTopicDailyBatch.length}.`);
 assert(priorDailyThirtyTopicBatch.length === 30, `Expected the prior 30-topic daily batch, received ${priorDailyThirtyTopicBatch.length}.`);
+assert(priorNewestDailyTopics.length === 30, `Expected the prior 30-topic daily batch, received ${priorNewestDailyTopics.length}.`);
 assert(dailyTopics.length === 30, `Expected 30 new daily topics, received ${dailyTopics.length}.`);
 assert(foundationalTopics.length === 80, `Expected 80 foundational topics, received ${foundationalTopics.length}.`);
-assert(topics.length === 260, `Expected 260 topics total, received ${topics.length}.`);
+assert(topics.length === 290, `Expected 290 topics total, received ${topics.length}.`);
 assert(sharedTopicIds.size === topics.length, "Shared topic IDs must be unique.");
 assert(!topics.some((topic) => topic.series.includes("女性職涯")), "Legacy category wording must not remain in topic metadata.");
 
@@ -72,13 +74,13 @@ const foundationalCtas = foundationalTopics.map((topic) => normalize(topic.singl
 assert(new Set(foundationalCtas).size === foundationalCtas.length, "Foundational CTA keywords must be unique.");
 
 const categorizedTopicCounts = new Map<string, number>();
-for (const topic of [...priorDailyThirtyTopicBatch, ...dailyTopics, ...foundationalTopics]) {
+for (const topic of [...priorDailyThirtyTopicBatch, ...priorNewestDailyTopics, ...dailyTopics, ...foundationalTopics]) {
   categorizedTopicCounts.set(topic.category, (categorizedTopicCounts.get(topic.category) ?? 0) + 1);
   assert(!/(遇到「|如果你一直卡在|你會在「|不是只有你覺得)/u.test(`${topic.empathy}${topic.explain}${topic.reframe}`), `${topic.id} still uses a generic empathy template.`);
 }
-assert(categorizedTopicCounts.get("女性成長") === 47, "女性成長 must have 47 categorized topics.");
-assert(categorizedTopicCounts.get("金錢價值觀") === 47, "金錢價值觀 must have 47 categorized topics.");
-assert(categorizedTopicCounts.get("親子關係") === 46, "親子關係 must have 46 categorized topics.");
+assert(categorizedTopicCounts.get("女性成長") === 57, "女性成長 must have 57 categorized topics.");
+assert(categorizedTopicCounts.get("金錢價值觀") === 57, "金錢價值觀 must have 57 categorized topics.");
+assert(categorizedTopicCounts.get("親子關係") === 56, "親子關係 must have 56 categorized topics.");
 assert(newTopicCategories.every((category) => categorizedTopicCounts.has(category)), "Every new category must be represented in the topic bank.");
 
 console.log(JSON.stringify({ firstBatchTopics: legacyTopics.length, dailyTopics: dailyTopics.length, foundationalTopics: foundationalTopics.length, totalTopics: topics.length, deduped: true }));
