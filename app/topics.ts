@@ -5,6 +5,7 @@ import { dailyTopics20260803 } from "./daily-topics-2026-08-03";
 import { dailyTopics20260804 } from "./daily-topics-2026-08-04";
 import { dailyTopics20260805 } from "./daily-topics-2026-08-05";
 import { dailyTopics20260807 } from "./daily-topics-2026-08-07";
+import { dailyTopics20260808 } from "./daily-topics-2026-08-08";
 import { foundationalTopics } from "./foundational-topics";
 
 export type Topic = {
@@ -231,7 +232,7 @@ const legacyTopics: Topic[] = seeds.map((seed, index) => makeTopic(seed, index, 
 // available in the library, but do not move the continuation unlock goal.
 export const firstBatchTopics: Topic[] = legacyTopics;
 export const newTopicCategories = ["女性成長", "金錢價值觀", "親子關係"] as const;
-export const topics: Topic[] = [...firstBatchTopics, ...dailyTopics, ...dailyTopics20260717, ...dailyTopics20260725, ...dailyTopics20260803, ...dailyTopics20260804, ...dailyTopics20260805, ...dailyTopics20260807, ...foundationalTopics];
+export const topics: Topic[] = [...firstBatchTopics, ...dailyTopics, ...dailyTopics20260717, ...dailyTopics20260725, ...dailyTopics20260803, ...dailyTopics20260804, ...dailyTopics20260805, ...dailyTopics20260807, ...dailyTopics20260808, ...foundationalTopics];
 export const firstBatchTopicIds = new Set(firstBatchTopics.map((topic) => topic.id));
 export const sharedTopicIds = new Set(topics.map((topic) => topic.id));
 
