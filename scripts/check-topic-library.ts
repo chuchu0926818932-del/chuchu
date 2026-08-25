@@ -13,7 +13,7 @@ const priorDailyTopics = topics.filter((topic) => topic.id.startsWith("D20260716
 const priorThirtyTopicDailyBatch = topics.filter((topic) => topic.id.startsWith("D20260717-"));
 const priorDailyThirtyTopicBatch = topics.filter((topic) => topic.id.startsWith("D20260725-"));
 const priorNewestDailyTopics = topics.filter((topic) => topic.id.startsWith("D20260803-"));
-const dailyTopics = topics.filter((topic) => topic.id.startsWith("D20260824-"));
+const dailyTopics = topics.filter((topic) => topic.id.startsWith("D20260825-"));
 const foundationalTopics = topics.filter((topic) => topic.id.startsWith("F20260716-"));
 
 assert(legacyTopics.length === 80, `Expected 80 first-batch topics, received ${legacyTopics.length}.`);
@@ -23,7 +23,7 @@ assert(priorDailyThirtyTopicBatch.length === 30, `Expected the prior 30-topic da
 assert(priorNewestDailyTopics.length === 30, `Expected the prior 30-topic daily batch, received ${priorNewestDailyTopics.length}.`);
 assert(dailyTopics.length === 30, `Expected 30 new daily topics, received ${dailyTopics.length}.`);
 assert(foundationalTopics.length === 80, `Expected 80 foundational topics, received ${foundationalTopics.length}.`);
-assert(topics.length === 710, `Expected 710 topics total, received ${topics.length}.`);
+assert(topics.length === 740, `Expected 740 topics total, received ${topics.length}.`);
 assert(sharedTopicIds.size === topics.length, "Shared topic IDs must be unique.");
 assert(!topics.some((topic) => topic.series.includes("女性職涯")), "Legacy category wording must not remain in topic metadata.");
 
