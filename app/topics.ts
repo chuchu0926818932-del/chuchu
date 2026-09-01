@@ -22,6 +22,7 @@ import { dailyTopics20260826 } from "./daily-topics-2026-08-26";
 import { dailyTopics20260828 } from "./daily-topics-2026-08-28";
 import { dailyTopics20260829 } from "./daily-topics-2026-08-29";
 import { dailyTopics20260830 } from "./daily-topics-2026-08-30";
+import { dailyTopics20260901 } from "./daily-topics-2026-09-01";
 import { foundationalTopics } from "./foundational-topics";
 
 export type Topic = {
@@ -248,7 +249,7 @@ const legacyTopics: Topic[] = seeds.map((seed, index) => makeTopic(seed, index, 
 // available in the library, but do not move the continuation unlock goal.
 export const firstBatchTopics: Topic[] = legacyTopics;
 export const newTopicCategories = ["女性成長", "金錢價值觀", "親子關係"] as const;
-export const topics: Topic[] = [...firstBatchTopics, ...dailyTopics, ...dailyTopics20260717, ...dailyTopics20260725, ...dailyTopics20260803, ...dailyTopics20260804, ...dailyTopics20260805, ...dailyTopics20260807, ...dailyTopics20260808, ...dailyTopics20260809, ...dailyTopics20260810, ...dailyTopics20260813, ...dailyTopics20260816, ...dailyTopics20260817, ...dailyTopics20260818, ...dailyTopics20260819, ...dailyTopics20260820, ...dailyTopics20260822, ...dailyTopics20260823, ...dailyTopics20260824, ...dailyTopics20260825, ...dailyTopics20260826, ...dailyTopics20260828, ...dailyTopics20260829, ...dailyTopics20260830, ...foundationalTopics];
+export const topics: Topic[] = [...firstBatchTopics, ...dailyTopics, ...dailyTopics20260717, ...dailyTopics20260725, ...dailyTopics20260803, ...dailyTopics20260804, ...dailyTopics20260805, ...dailyTopics20260807, ...dailyTopics20260808, ...dailyTopics20260809, ...dailyTopics20260810, ...dailyTopics20260813, ...dailyTopics20260816, ...dailyTopics20260817, ...dailyTopics20260818, ...dailyTopics20260819, ...dailyTopics20260820, ...dailyTopics20260822, ...dailyTopics20260823, ...dailyTopics20260824, ...dailyTopics20260825, ...dailyTopics20260826, ...dailyTopics20260828, ...dailyTopics20260829, ...dailyTopics20260830, ...dailyTopics20260901, ...foundationalTopics];
 export const firstBatchTopicIds = new Set(firstBatchTopics.map((topic) => topic.id));
 export const sharedTopicIds = new Set(topics.map((topic) => topic.id));
 
