@@ -1,7 +1,7 @@
 import type { Topic } from "./topics";
 
 type Category = "女性成長" | "金錢價值觀" | "親子關係";
-type Draft = Pick<Topic, "category" | "title" | "hook" | "scene" | "empathy" | "explain" | "action" | "reframe" | "singleCta" | "contentType">;
+type Draft = Omit<Pick<Topic, "category" | "title" | "hook" | "scene" | "empathy" | "explain" | "action" | "reframe" | "singleCta" | "contentType">, "category"> & { category: Category };
 
 const formulas = ["你以為，其實", "三步驟", "前後對比", "情境拆解", "一句話提醒", "常見誤區", "選擇題", "單一關鍵字 CTA"];
 
