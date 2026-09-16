@@ -13,7 +13,7 @@ const priorDailyTopics = topics.filter((topic) => topic.id.startsWith("D20260716
 const priorThirtyTopicDailyBatch = topics.filter((topic) => topic.id.startsWith("D20260717-"));
 const priorDailyThirtyTopicBatch = topics.filter((topic) => topic.id.startsWith("D20260725-"));
 const priorNewestDailyTopics = topics.filter((topic) => topic.id.startsWith("D20260803-"));
-const dailyTopics = topics.filter((topic) => topic.id.startsWith("D20260915-"));
+const dailyTopics = topics.filter((topic) => topic.id.startsWith("D20260916-"));
 const foundationalTopics = topics.filter((topic) => topic.id.startsWith("F20260716-"));
 
 assert(legacyTopics.length === 80, `Expected 80 first-batch topics, received ${legacyTopics.length}.`);
@@ -23,7 +23,7 @@ assert(priorDailyThirtyTopicBatch.length === 30, `Expected the prior 30-topic da
 assert(priorNewestDailyTopics.length === 30, `Expected the prior 30-topic daily batch, received ${priorNewestDailyTopics.length}.`);
 assert(dailyTopics.length === 30, `Expected 30 new daily topics, received ${dailyTopics.length}.`);
 assert(foundationalTopics.length === 80, `Expected 80 foundational topics, received ${foundationalTopics.length}.`);
-assert(topics.length === 920, `Expected 920 topics total, received ${topics.length}.`);
+assert(topics.length === 950, `Expected 950 topics total, received ${topics.length}.`);
 assert(sharedTopicIds.size === topics.length, "Shared topic IDs must be unique.");
 assert(!topics.some((topic) => topic.series.includes("女性職涯")), "Legacy category wording must not remain in topic metadata.");
 
@@ -37,9 +37,11 @@ const formulaCounts = new Map<string, number>();
 for (const topic of dailyTopics) {
   categoryCounts.set(topic.category, (categoryCounts.get(topic.category) ?? 0) + 1);
   formulaCounts.set(topic.formula, (formulaCounts.get(topic.formula) ?? 0) + 1);
-  for (const field of ["title", "hook", "scene", "empathy", "explain", "action", "reframe", "cta", "singleCta", "category", "formula", "contentType", "risk", "check", "storyline", "storyElements", "threeLayer"] as const) {
+  for (const field of ["id", "title", "hook", "angle", "structure", "visual", "series", "scene", "empathy", "explain", "action", "reframe", "cta", "singleCta", "category", "formula", "contentType", "risk", "check", "storyline", "storyElements", "threeLayer"] as const) {
     assert(topic[field].trim().length > 0, `${topic.id} is missing ${field}.`);
   }
+  assert(Number.isInteger(topic.formulaOrder) && topic.formulaOrder >= 1 && topic.formulaOrder <= 8, `${topic.id} has invalid formulaOrder.`);
+  assert(Number.isInteger(topic.formulaIndex) && topic.formulaIndex >= 1 && topic.formulaIndex <= 4, `${topic.id} has invalid formulaIndex.`);
   assert(topic.cta === topic.singleCta, `${topic.id} must have one CTA value.`);
   assert(!/(目標：|阻礙：|努力：|結果：|意外：|轉彎：|結局：)/u.test(topic.hook + topic.empathy + topic.explain + topic.action + topic.reframe), `${topic.id} exposes an internal story label.`);
 }
@@ -59,7 +61,7 @@ assert(new Set(dailyCtas).size === dailyCtas.length, "Daily CTA keywords must be
 const dailyExplains = dailyTopics.map((topic) => normalize(topic.explain));
 assert(new Set(dailyExplains).size === dailyExplains.length, "Daily core viewpoints must be unique.");
 for (const field of ["explain", "singleCta"] as const) {
-  const priorValues = new Set(topics.filter((topic) => !topic.id.startsWith("D20260915-")).map((topic) => normalize(topic[field])));
+  const priorValues = new Set(topics.filter((topic) => !topic.id.startsWith("D20260916-")).map((topic) => normalize(topic[field])));
   const duplicate = dailyTopics.find((topic) => priorValues.has(normalize(topic[field])));
   assert(!duplicate, `${duplicate?.id} ${field} must not repeat prior topic-library values.`);
 }
