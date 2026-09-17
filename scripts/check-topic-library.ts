@@ -13,7 +13,8 @@ const priorDailyTopics = topics.filter((topic) => topic.id.startsWith("D20260716
 const priorThirtyTopicDailyBatch = topics.filter((topic) => topic.id.startsWith("D20260717-"));
 const priorDailyThirtyTopicBatch = topics.filter((topic) => topic.id.startsWith("D20260725-"));
 const priorNewestDailyTopics = topics.filter((topic) => topic.id.startsWith("D20260803-"));
-const dailyTopics = topics.filter((topic) => topic.id.startsWith("D20260916-"));
+const priorFinalDailyTopics = topics.filter((topic) => topic.id.startsWith("D20260916-"));
+const dailyTopics = topics.filter((topic) => topic.id.startsWith("D20260917-"));
 const foundationalTopics = topics.filter((topic) => topic.id.startsWith("F20260716-"));
 
 assert(legacyTopics.length === 80, `Expected 80 first-batch topics, received ${legacyTopics.length}.`);
@@ -23,7 +24,7 @@ assert(priorDailyThirtyTopicBatch.length === 30, `Expected the prior 30-topic da
 assert(priorNewestDailyTopics.length === 30, `Expected the prior 30-topic daily batch, received ${priorNewestDailyTopics.length}.`);
 assert(dailyTopics.length === 30, `Expected 30 new daily topics, received ${dailyTopics.length}.`);
 assert(foundationalTopics.length === 80, `Expected 80 foundational topics, received ${foundationalTopics.length}.`);
-assert(topics.length === 950, `Expected 950 topics total, received ${topics.length}.`);
+assert(topics.length === 980, `Expected 980 topics total, received ${topics.length}.`);
 assert(sharedTopicIds.size === topics.length, "Shared topic IDs must be unique.");
 assert(!topics.some((topic) => topic.series.includes("女性職涯")), "Legacy category wording must not remain in topic metadata.");
 
@@ -61,7 +62,7 @@ assert(new Set(dailyCtas).size === dailyCtas.length, "Daily CTA keywords must be
 const dailyExplains = dailyTopics.map((topic) => normalize(topic.explain));
 assert(new Set(dailyExplains).size === dailyExplains.length, "Daily core viewpoints must be unique.");
 for (const field of ["explain", "singleCta"] as const) {
-  const priorValues = new Set(topics.filter((topic) => !topic.id.startsWith("D20260916-")).map((topic) => normalize(topic[field])));
+  const priorValues = new Set(topics.filter((topic) => !topic.id.startsWith("D20260917-")).map((topic) => normalize(topic[field])));
   const duplicate = dailyTopics.find((topic) => priorValues.has(normalize(topic[field])));
   assert(!duplicate, `${duplicate?.id} ${field} must not repeat prior topic-library values.`);
 }
@@ -81,13 +82,13 @@ const foundationalCtas = foundationalTopics.map((topic) => normalize(topic.singl
 assert(new Set(foundationalCtas).size === foundationalCtas.length, "Foundational CTA keywords must be unique.");
 
 const categorizedTopicCounts = new Map<string, number>();
-for (const topic of [...priorDailyThirtyTopicBatch, ...priorNewestDailyTopics, ...dailyTopics, ...foundationalTopics]) {
+for (const topic of [...priorDailyThirtyTopicBatch, ...priorNewestDailyTopics, ...priorFinalDailyTopics, ...dailyTopics, ...foundationalTopics]) {
   categorizedTopicCounts.set(topic.category, (categorizedTopicCounts.get(topic.category) ?? 0) + 1);
   assert(!/(遇到「|如果你一直卡在|你會在「|不是只有你覺得)/u.test(`${topic.empathy}${topic.explain}${topic.reframe}`), `${topic.id} still uses a generic empathy template.`);
 }
-assert(categorizedTopicCounts.get("女性成長") === 57, "女性成長 must have 57 categorized topics.");
-assert(categorizedTopicCounts.get("金錢價值觀") === 57, "金錢價值觀 must have 57 categorized topics.");
-assert(categorizedTopicCounts.get("親子關係") === 56, "親子關係 must have 56 categorized topics.");
+assert(categorizedTopicCounts.get("女性成長") === 67, "女性成長 must have 67 categorized topics.");
+assert(categorizedTopicCounts.get("金錢價值觀") === 67, "金錢價值觀 must have 67 categorized topics.");
+assert(categorizedTopicCounts.get("親子關係") === 66, "親子關係 must have 66 categorized topics.");
 assert(newTopicCategories.every((category) => categorizedTopicCounts.has(category)), "Every new category must be represented in the topic bank.");
 
 console.log(JSON.stringify({ firstBatchTopics: legacyTopics.length, dailyTopics: dailyTopics.length, foundationalTopics: foundationalTopics.length, totalTopics: topics.length, deduped: true }));
