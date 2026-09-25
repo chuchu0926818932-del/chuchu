@@ -29,6 +29,7 @@ import { dailyTopics20260917 } from "./daily-topics-2026-09-17";
 import { dailyTopics20260918 } from "./daily-topics-2026-09-18";
 import { dailyTopics20260919 } from "./daily-topics-2026-09-19";
 import { dailyTopics20260922 } from "./daily-topics-2026-09-22";
+import { dailyTopics20260923 } from "./daily-topics-2026-09-23";
 import { foundationalTopics } from "./foundational-topics";
 
 export type Topic = {
@@ -255,7 +256,7 @@ const legacyTopics: Topic[] = seeds.map((seed, index) => makeTopic(seed, index, 
 // available in the library, but do not move the continuation unlock goal.
 export const firstBatchTopics: Topic[] = legacyTopics;
 export const newTopicCategories = ["女性成長", "金錢價值觀", "親子關係"] as const;
-export const topics: Topic[] = [...firstBatchTopics, ...dailyTopics, ...dailyTopics20260717, ...dailyTopics20260725, ...dailyTopics20260803, ...dailyTopics20260804, ...dailyTopics20260805, ...dailyTopics20260807, ...dailyTopics20260808, ...dailyTopics20260809, ...dailyTopics20260810, ...dailyTopics20260813, ...dailyTopics20260816, ...dailyTopics20260817, ...dailyTopics20260818, ...dailyTopics20260819, ...dailyTopics20260820, ...dailyTopics20260822, ...dailyTopics20260823, ...dailyTopics20260824, ...dailyTopics20260825, ...dailyTopics20260826, ...dailyTopics20260828, ...dailyTopics20260829, ...dailyTopics20260830, ...dailyTopics20260901, ...dailyTopics20260915, ...dailyTopics20260916, ...dailyTopics20260917, ...dailyTopics20260918, ...dailyTopics20260919, ...dailyTopics20260922, ...foundationalTopics];
+export const topics: Topic[] = [...firstBatchTopics, ...dailyTopics, ...dailyTopics20260717, ...dailyTopics20260725, ...dailyTopics20260803, ...dailyTopics20260804, ...dailyTopics20260805, ...dailyTopics20260807, ...dailyTopics20260808, ...dailyTopics20260809, ...dailyTopics20260810, ...dailyTopics20260813, ...dailyTopics20260816, ...dailyTopics20260817, ...dailyTopics20260818, ...dailyTopics20260819, ...dailyTopics20260820, ...dailyTopics20260822, ...dailyTopics20260823, ...dailyTopics20260824, ...dailyTopics20260825, ...dailyTopics20260826, ...dailyTopics20260828, ...dailyTopics20260829, ...dailyTopics20260830, ...dailyTopics20260901, ...dailyTopics20260915, ...dailyTopics20260916, ...dailyTopics20260917, ...dailyTopics20260918, ...dailyTopics20260919, ...dailyTopics20260922, ...dailyTopics20260923, ...foundationalTopics];
 export const firstBatchTopicIds = new Set(firstBatchTopics.map((topic) => topic.id));
 export const sharedTopicIds = new Set(topics.map((topic) => topic.id));
 
