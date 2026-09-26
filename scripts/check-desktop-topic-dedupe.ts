@@ -3,9 +3,9 @@ import { readdir, readFile, stat } from "node:fs/promises";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
 import { FileBlob, SpreadsheetFile } from "@oai/artifact-tool";
-import { dailyTopics20260923 } from "../app/daily-topics-2026-09-23";
+import { dailyTopics20260926 } from "../app/daily-topics-2026-09-26";
 
-type DedupeTopic = Pick<(typeof dailyTopics20260923)[number], "id" | "title" | "hook" | "scene" | "explain" | "singleCta">;
+type DedupeTopic = Pick<(typeof dailyTopics20260926)[number], "id" | "title" | "hook" | "scene" | "explain" | "singleCta">;
 type DedupeField = Exclude<keyof DedupeTopic, "id">;
 export type DesktopTopicCollision = { id: string; field: DedupeField; file: string };
 
@@ -84,11 +84,11 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
   const desktopRoot = process.env.SNL_DESKTOP_TOPIC_ROOT ?? "C:\\Users\\USER\\Desktop";
   const dailyOutputDir = path.join(desktopRoot, "短影音企劃網站", "每日新增企劃");
   const excludedFiles = [
-    path.join(dailyOutputDir, "2026-09-23_30-topics.md"),
-    path.join(dailyOutputDir, "2026-09-23_30-topics.xlsx"),
+    path.join(dailyOutputDir, "2026-09-26_30-topics.md"),
+    path.join(dailyOutputDir, "2026-09-26_30-topics.xlsx"),
   ];
   const sourceRoots = [path.join(desktopRoot, "短影音企劃網站"), path.join(desktopRoot, "短影音文案")];
-  const collisions = (await Promise.all(sourceRoots.map((sourceRoot) => findDesktopTopicCollisions(dailyTopics20260923, sourceRoot, excludedFiles)))).flat();
+  const collisions = (await Promise.all(sourceRoots.map((sourceRoot) => findDesktopTopicCollisions(dailyTopics20260926, sourceRoot, excludedFiles)))).flat();
   assert.equal(collisions.length, 0, `Desktop source duplicates found: ${JSON.stringify(collisions)}`);
   console.log(JSON.stringify({ sourceRoots, sourcesChecked: "Markdown and Excel", collisions: 0 }));
 }
