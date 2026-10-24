@@ -4,7 +4,12 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import test from "node:test";
 import { SpreadsheetFile, Workbook } from "@oai/artifact-tool";
-import { findDesktopTopicCollisions } from "../scripts/check-desktop-topic-dedupe";
+import { desktopTopicSourceRoots, findDesktopTopicCollisions } from "../scripts/check-desktop-topic-dedupe";
+
+test("desktopTopicSourceRoots scans the entire Desktop to protect against topic files outside known folders", () => {
+  const desktopRoot = "C:\\Users\\USER\\Desktop";
+  assert.deepEqual(desktopTopicSourceRoots(desktopRoot), [desktopRoot]);
+});
 
 test("findDesktopTopicCollisions reports an exact title duplicate in a Desktop Markdown source", async () => {
   const sourceRoot = await mkdtemp(path.join(tmpdir(), "desktop-topic-dedupe-"));
