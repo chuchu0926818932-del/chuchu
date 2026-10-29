@@ -1,0 +1,24 @@
+import assert from "node:assert/strict";
+import { readFile } from "node:fs/promises";
+import { FileBlob, SpreadsheetFile } from "@oai/artifact-tool";
+import { dailyTopics20261029 } from "../app/daily-topics-2026-10-29";
+import { assertMarkdownMatchesTopics, assertWorksheetMatchesTopics } from "./daily-batch-2026-10-29-validation";
+
+const outputDir = "C:\\Users\\USER\\Desktop\\短影音企劃網站\\每日新增企劃";
+const markdownPath = `${outputDir}\\2026-10-29_30-topics.md`;
+const workbookPath = `${outputDir}\\2026-10-29_30-topics.xlsx`;
+const markdown = await readFile(markdownPath, "utf8");
+assert.equal((markdown.match(/^## \d+\. /gmu) ?? []).length, 30, "Markdown must contain 30 plans.");
+assertMarkdownMatchesTopics(markdown, dailyTopics20261029);
+const workbook = await SpreadsheetFile.importXlsx(await FileBlob.load(workbookPath));
+assert.equal(workbook.worksheets.items.length, 1, "Workbook must have one worksheet.");
+const sheet = workbook.worksheets.items[0];
+const used = sheet.getUsedRange(true);
+assert.deepEqual(used?.values?.[0]?.slice(0, 1), ["2026-10-29 短影音企劃 30 條"]);
+assert.equal(used?.values?.length, 33, "Workbook must contain title, subtitle, header, and 30 plans.");
+assert.equal(used?.values?.[3]?.[0], "D20261029-01");
+assert.equal(used?.values?.[32]?.[0], "D20261029-30");
+assertWorksheetMatchesTopics(used?.values ?? [], dailyTopics20261029);
+const errors = await workbook.inspect({ kind: "match", searchTerm: "#REF!|#DIV/0!|#VALUE!|#NAME\\?|#N/A|#NUM!|#NULL!|#SPILL!|#CALC!", options: { useRegex: true, maxResults: 50 }, summary: "saved workbook formula error scan" });
+assert.equal(errors.ndjson.includes("Cell search matched 0 entries."), true, "Workbook must not contain formula errors.");
+console.log(JSON.stringify({ markdownPlans: 30, worksheet: sheet.name, usedRange: "A1:X33", firstId: used?.values?.[3]?.[0], lastId: used?.values?.[32]?.[0], formulaErrors: 0 }));

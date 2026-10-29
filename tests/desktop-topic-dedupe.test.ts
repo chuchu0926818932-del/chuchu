@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { mkdtemp, rm, writeFile } from "node:fs/promises";
+import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import test from "node:test";
@@ -9,6 +9,13 @@ import { desktopTopicSourceRoots, findDesktopTopicCollisions } from "../scripts/
 test("desktopTopicSourceRoots scans the entire Desktop to protect against topic files outside known folders", () => {
   const desktopRoot = "C:\\Users\\USER\\Desktop";
   assert.deepEqual(desktopTopicSourceRoots(desktopRoot), [desktopRoot]);
+});
+
+test("desktop dedupe command is configured for the newest daily batch", async () => {
+  const commandSource = await readFile(new URL("../scripts/check-desktop-topic-dedupe.ts", import.meta.url), "utf8");
+  assert.match(commandSource, /dailyTopics20261029/);
+  assert.match(commandSource, /2026-10-29_30-topics\.md/);
+  assert.match(commandSource, /2026-10-29_30-topics\.xlsx/);
 });
 
 test("findDesktopTopicCollisions reports an exact title duplicate in a Desktop Markdown source", async () => {
