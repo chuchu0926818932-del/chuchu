@@ -14,7 +14,7 @@ const priorThirtyTopicDailyBatch = topics.filter((topic) => topic.id.startsWith(
 const priorDailyThirtyTopicBatch = topics.filter((topic) => topic.id.startsWith("D20260725-"));
 const priorNewestDailyTopics = topics.filter((topic) => topic.id.startsWith("D20260803-"));
 const priorFinalDailyTopics = topics.filter((topic) => topic.id.startsWith("D20260917-"));
-const dailyTopics = topics.filter((topic) => topic.id.startsWith("D20261029-"));
+const dailyTopics = topics.filter((topic) => topic.id.startsWith("D20261101-"));
 const foundationalTopics = topics.filter((topic) => topic.id.startsWith("F20260716-"));
 
 assert(legacyTopics.length === 80, `Expected 80 first-batch topics, received ${legacyTopics.length}.`);
@@ -62,7 +62,7 @@ assert(new Set(dailyCtas).size === dailyCtas.length, "Daily CTA keywords must be
 const dailyExplains = dailyTopics.map((topic) => normalize(topic.explain));
 assert(new Set(dailyExplains).size === dailyExplains.length, "Daily core viewpoints must be unique.");
 for (const field of ["explain", "singleCta"] as const) {
-  const priorValues = new Set(topics.filter((topic) => !topic.id.startsWith("D20261029-")).map((topic) => normalize(topic[field])));
+  const priorValues = new Set(topics.filter((topic) => !topic.id.startsWith("D20261101-")).map((topic) => normalize(topic[field])));
   const duplicate = dailyTopics.find((topic) => priorValues.has(normalize(topic[field])));
   assert(!duplicate, `${duplicate?.id} ${field} must not repeat prior topic-library values.`);
 }
