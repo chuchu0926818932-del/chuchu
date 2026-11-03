@@ -1,0 +1,11 @@
+import assert from "node:assert/strict";
+import { readFile } from "node:fs/promises";
+import { FileBlob, SpreadsheetFile } from "@oai/artifact-tool";
+import { dailyTopics20261103 } from "../app/daily-topics-2026-11-03";
+import { assertMarkdownMatchesTopics, assertWorksheetMatchesTopics } from "./daily-batch-2026-11-03-validation";
+
+const outputDir = "C:\\Users\\USER\\Desktop\\短影音企劃網站\\每日新增企劃";
+const markdown = await readFile(`${outputDir}\\2026-11-03_30-topics.md`, "utf8");
+assert.equal((markdown.match(/^## \d+\. /gmu) ?? []).length, 30); assertMarkdownMatchesTopics(markdown, dailyTopics20261103);
+const workbook = await SpreadsheetFile.importXlsx(await FileBlob.load(`${outputDir}\\2026-11-03_30-topics.xlsx`)); assert.equal(workbook.worksheets.items.length, 1); const sheet = workbook.worksheets.items[0]; const used = sheet.getUsedRange(true); assert.deepEqual(used?.values?.[0]?.slice(0, 1), ["2026-11-03 短影音企劃 30 條"]); assert.equal(used?.values?.length, 33); assert.equal(used?.values?.[3]?.[0], "D20261103-01"); assert.equal(used?.values?.[32]?.[0], "D20261103-30"); assertWorksheetMatchesTopics(used?.values ?? [], dailyTopics20261103);
+const errors = await workbook.inspect({ kind: "match", searchTerm: "#REF!|#DIV/0!|#VALUE!|#NAME\\?|#N/A|#NUM!|#NULL!|#SPILL!|#CALC!", options: { useRegex: true, maxResults: 50 }, summary: "saved workbook formula error scan" }); assert.equal(errors.ndjson.includes("Cell search matched 0 entries."), true); console.log(JSON.stringify({ markdownPlans: 30, worksheet: sheet.name, usedRange: "A1:X33", firstId: used?.values?.[3]?.[0], lastId: used?.values?.[32]?.[0], formulaErrors: 0 }));
