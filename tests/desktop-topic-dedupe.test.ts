@@ -13,9 +13,9 @@ test("desktopTopicSourceRoots scans the entire Desktop to protect against topic 
 
 test("desktop dedupe command is configured for the newest daily batch", async () => {
   const commandSource = await readFile(new URL("../scripts/check-desktop-topic-dedupe.ts", import.meta.url), "utf8");
-  assert.match(commandSource, /dailyTopics20261104/);
-  assert.match(commandSource, /2026-11-04_30-topics\.md/);
-  assert.match(commandSource, /2026-11-04_30-topics\.xlsx/);
+  assert.match(commandSource, /dailyTopics20261105/);
+  assert.match(commandSource, /2026-11-05_30-topics\.md/);
+  assert.match(commandSource, /2026-11-05_30-topics\.xlsx/);
 });
 
 test("findDesktopTopicCollisions reports an exact title duplicate in a Desktop Markdown source", async () => {
