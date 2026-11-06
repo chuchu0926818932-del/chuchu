@@ -18,8 +18,8 @@ test("2026-11-01 batch supplies 30 safe and distinct production plans", () => {
   assert.equal(batch.filter((topic) => topic.category === "親子關係").every((topic) => !/問題兒童|難搞|不聽話|保證.*改變|一定.*改變/.test([topic.title, topic.hook, topic.explain, topic.action, topic.reframe].join(" "))), true);
 });
 
-test("topic-library validation protects 2026-11-05 explain and CTA uniqueness", async () => {
+test("topic-library validation protects 2026-11-06 explain and CTA uniqueness", async () => {
   const checker = await readFile(new URL("../scripts/check-topic-library.ts", import.meta.url), "utf8");
-  assert.match(checker, /D20261105-/);
-  assert.match(checker, /topics\.length === 1850/);
+  assert.match(checker, /D20261106-/);
+  assert.match(checker, /topics\.length === 1880/);
 });
