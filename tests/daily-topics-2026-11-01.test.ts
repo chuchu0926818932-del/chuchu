@@ -20,6 +20,6 @@ test("2026-11-01 batch supplies 30 safe and distinct production plans", () => {
 
 test("topic-library validation protects the newest batch explain and CTA uniqueness", async () => {
   const checker = await readFile(new URL("../scripts/check-topic-library.ts", import.meta.url), "utf8");
-  assert.match(checker, /D20261109-/);
-  assert.match(checker, /topics\.length === 1970/);
+  assert.match(checker, /D20261110-/);
+  assert.match(checker, /topics\.length === 2000/);
 });
