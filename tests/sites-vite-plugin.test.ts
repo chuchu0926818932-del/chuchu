@@ -15,3 +15,15 @@ test("sites packaging tolerates concurrent closeBundle hooks", async () => {
     plugin.closeBundle?.call(plugin),
   ]));
 });
+
+test("sites packaging serializes closeBundle hooks across plugin instances", async () => {
+  const firstPlugin = sites();
+  const secondPlugin = sites();
+  await firstPlugin.configResolved?.({ root: process.cwd() } as never);
+  await secondPlugin.configResolved?.({ root: process.cwd() } as never);
+  await rm(resolve(process.cwd(), "dist", ".openai"), { recursive: true, force: true });
+  await assert.doesNotReject(async () => Promise.all([
+    firstPlugin.closeBundle?.call(firstPlugin),
+    secondPlugin.closeBundle?.call(secondPlugin),
+  ]));
+});

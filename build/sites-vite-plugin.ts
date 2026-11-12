@@ -2,6 +2,10 @@ import { access, cp, mkdir, rm } from "node:fs/promises";
 import { resolve } from "node:path";
 import type { Plugin } from "vite";
 
+// Vite creates one plugin instance per environment. Packaging writes to the
+// shared dist/.openai directory, so its queue must outlive each instance.
+let packaging = Promise.resolve();
+
 async function exists(path: string): Promise<boolean> {
   try {
     await access(path);
@@ -17,7 +21,6 @@ async function exists(path: string): Promise<boolean> {
 // Packages Sites metadata and migrations after Vite finishes compiling.
 export function sites(): Plugin {
   let root = process.cwd();
-  let packaging = Promise.resolve();
 
   return {
     name: "sites",
