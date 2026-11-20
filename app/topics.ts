@@ -72,6 +72,7 @@ import { dailyTopics20261115 } from "./daily-topics-2026-11-15";
 import { dailyTopics20261116 } from "./daily-topics-2026-11-16";
 import { dailyTopics20261117 } from "./daily-topics-2026-11-17";
 import { dailyTopics20261119 } from "./daily-topics-2026-11-19";
+import { dailyTopics20261120 } from "./daily-topics-2026-11-20";
 import { foundationalTopics } from "./foundational-topics";
 
 export type Topic = {
@@ -301,6 +302,7 @@ export const newTopicCategories = ["女性成長", "金錢價值觀", "親子關
 export const topics: Topic[] = [...firstBatchTopics, ...dailyTopics, ...dailyTopics20260717, ...dailyTopics20260725, ...dailyTopics20260803, ...dailyTopics20260804, ...dailyTopics20260805, ...dailyTopics20260807, ...dailyTopics20260808, ...dailyTopics20260809, ...dailyTopics20260810, ...dailyTopics20260813, ...dailyTopics20260816, ...dailyTopics20260817, ...dailyTopics20260818, ...dailyTopics20260819, ...dailyTopics20260820, ...dailyTopics20260822, ...dailyTopics20260823, ...dailyTopics20260824, ...dailyTopics20260825, ...dailyTopics20260826, ...dailyTopics20260828, ...dailyTopics20260829, ...dailyTopics20260901, ...dailyTopics20260915, ...dailyTopics20260916, ...dailyTopics20260917, ...dailyTopics20260918, ...dailyTopics20260919, ...dailyTopics20260922, ...dailyTopics20261001, ...dailyTopics20261002, ...dailyTopics20261003, ...dailyTopics20261008, ...dailyTopics20261009, ...dailyTopics20261010, ...dailyTopics20261011, ...dailyTopics20261012, ...dailyTopics20261013, ...dailyTopics20261014, ...dailyTopics20261015, ...dailyTopics20261016, ...dailyTopics20261018, ...dailyTopics20261020, ...dailyTopics20261021, ...dailyTopics20261023, ...dailyTopics20261024, ...dailyTopics20261025, ...dailyTopics20261026, ...dailyTopics20261027, ...dailyTopics20261028, ...dailyTopics20261029, ...dailyTopics20261101, ...dailyTopics20261102, ...dailyTopics20261103, ...dailyTopics20261104, ...dailyTopics20261105, ...dailyTopics20261106, ...dailyTopics20261107, ...dailyTopics20261108, ...dailyTopics20261109, ...dailyTopics20261110, ...dailyTopics20261111, ...dailyTopics20261112, ...dailyTopics20261113, ...dailyTopics20261115, ...dailyTopics20261116, ...foundationalTopics];
 topics.push(...dailyTopics20261117);
 topics.push(...dailyTopics20261119);
+topics.push(...dailyTopics20261120);
 export const firstBatchTopicIds = new Set(firstBatchTopics.map((topic) => topic.id));
 export const sharedTopicIds = new Set(topics.map((topic) => topic.id));
 
