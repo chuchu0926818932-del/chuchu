@@ -76,6 +76,7 @@ import { dailyTopics20261120 } from "./daily-topics-2026-11-20";
 import { dailyTopics20261121 } from "./daily-topics-2026-11-21";
 import { dailyTopics20261122 } from "./daily-topics-2026-11-22";
 import { dailyTopics20261123 } from "./daily-topics-2026-11-23";
+import { dailyTopics20261125 } from "./daily-topics-2026-11-25";
 import { foundationalTopics } from "./foundational-topics";
 
 export type Topic = {
@@ -309,6 +310,7 @@ topics.push(...dailyTopics20261120);
 topics.push(...dailyTopics20261121);
 topics.push(...dailyTopics20261122);
 topics.push(...dailyTopics20261123);
+topics.push(...dailyTopics20261125);
 export const firstBatchTopicIds = new Set(firstBatchTopics.map((topic) => topic.id));
 export const sharedTopicIds = new Set(topics.map((topic) => topic.id));
 
