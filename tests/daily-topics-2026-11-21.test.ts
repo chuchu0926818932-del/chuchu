@@ -7,7 +7,7 @@ const normalize = (value: string) => value.toLocaleLowerCase("zh-Hant").replace(
 test("2026-11-21 daily batch registers 30 complete, safe, and unique topics", () => {
   const dailyTopics = topics.filter((topic) => topic.id.startsWith("D20261121-"));
   assert.equal(dailyTopics.length, 30);
-  assert.equal(topics.length, 2360);
+  assert.equal(topics.length, 2390);
 
   const categoryCounts = new Map<string, number>();
   const formulaCounts = new Map<string, number>();
